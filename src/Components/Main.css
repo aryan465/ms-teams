@@ -1,0 +1,213 @@
+header{
+    background-color: rgb(100, 50, 146);
+    /* background-color: #46e4f0; */
+    color: white;
+    display: flex;
+    align-items: center;
+    /* justify-content: center; */
+    flex-direction: row;
+    height: 48px;
+}
+
+header div{
+    margin-left: 5px;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+header img{
+    width: 30px;
+    margin-left: 10px;
+}
+
+header input{
+    font-size: 14px;
+    width: 40vw;
+    height: 32px;
+    margin-left: 400px;
+    margin: auto;
+    padding-left: 8px;
+    padding-right: 5px;
+    border-radius: 5px;
+    background-color: rgb(250, 244, 255);
+}
+
+.window{
+    display: flex;
+    flex-direction: row;
+}
+
+.left{
+    width: 70px;
+    height: 93.5vh;
+    /* background-color: rgb(240, 240, 240); */
+    background-color: rgb(238, 244, 253);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+}
+
+.chatlogo{
+    width: 88%;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+
+}
+.chatlogo img{
+    width: 40px;
+    margin-top: 5px;
+
+}
+
+.chatlogo h6{
+    font-weight: 400;
+
+}
+
+.chatlogo:hover{
+    border-left: 3px solid rgb(100, 50, 146);
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+}
+
+.middle{
+    background-color: rgb(232, 240, 255);
+    width: 380px;
+    height: 93.5vh;
+    box-shadow: 0 0 6px 0 rgba(91, 91, 94, 0.733);
+    
+}
+
+.middle .mhead{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    /* justify-content: center; */
+    height: 55px;
+    border-bottom: 1px solid rgba(100, 148, 237, 0.301);
+}
+
+.mhead h3{
+    margin-left: 14px;
+}
+
+.mhead .logos{
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.mhead .logos img{
+    width: 20px;
+}
+
+.right{
+    background-color: rgb(245, 245, 245);
+    width: 1100px;
+    height: 93.5vh;
+    box-shadow: 0 0 8px 0 rgba(110, 110, 110, 0.733);
+    display: flex;
+    flex-direction: column;
+}
+
+.right .rhead{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 55px;
+    border-bottom: 1px solid rgba(142, 144, 146, 0.301);
+}
+
+.rhead .meettitle{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 5px;
+}
+
+.meettitle img{
+    width: 27px;
+}
+
+.meettitle h3{
+    margin-left: 2px;
+    font-weight: 600;
+}
+
+/* files after meettitle */
+.files{
+    margin-left: 15px;
+}
+.files ul{
+    display: flex;
+    flex-direction: row;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 500;
+    
+}
+
+ul li{
+
+    padding: 10px;
+    margin-right: 4px;
+    color: rgba(63, 62, 62, 0.849);
+}
+
+li:hover{
+    background-color: rgb(235, 216, 253);
+    color: black;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.right .rfoot{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+    height: 80px;
+    /* border: 2px solid violet; */
+    margin-top: auto;
+    padding-top: 5px;
+}
+
+.rfoot input{
+    font-size: 14px;
+    width: 60vw;
+    height: 35px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 8px;
+    padding-right: 5px;
+    border: 1px solid rgb(161, 161, 161);
+    border-radius: 5px;
+    background-color: rgb(250, 244, 255);
+}
+
+.rfoot .ficons{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 60vw;
+    margin-top: auto;
+
+}
+
+.send {
+    width: 30px;
+    margin-left: auto;
+}
+.ficons .attach{
+    display: flex;
+}
+
+.attach img{
+    width: 25px;
+}
