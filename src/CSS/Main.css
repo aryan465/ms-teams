@@ -39,13 +39,14 @@ header input{
 
 .left{
     width: 70px;
+    min-width: 65px;
     height: 93.5vh;
     /* background-color: rgb(240, 240, 240); */
     background-color: rgb(238, 244, 253);
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* justify-content: center; */
+
 }
 
 .chatlogo{
@@ -165,29 +166,30 @@ li:hover{
     color: black;
     border-radius: 5px;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .right .rfoot{
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* justify-content: center; */
-    height: 80px;
-    /* border: 2px solid violet; */
+    height: 78px;
     margin-top: auto;
     padding-top: 5px;
+    /* background-color: rgba(194, 191, 191, 0.219); */
 }
 
 .rfoot input{
     font-size: 14px;
     width: 60vw;
-    height: 35px;
+    max-width: 900px;
+    height: 36px;
     margin-left: auto;
     margin-right: auto;
     padding-left: 8px;
     padding-right: 5px;
     border: 1px solid rgb(161, 161, 161);
-    border-radius: 5px;
+    border-radius: 8px;
     background-color: rgb(250, 244, 255);
 }
 
@@ -195,19 +197,38 @@ li:hover{
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 60vw;
+    width: 59vw;
+    max-width: 890px;
+    /* border: 2px solid greenyellow; */
     margin-top: auto;
+    margin-bottom: auto;
 
 }
 
 .send {
-    width: 30px;
+    width: 22px;
     margin-left: auto;
+
+}
+
+.send:hover{
+    /* background-color: rgba(137, 43, 226, 0.356); */
+    width: 25px;
+    cursor: pointer;
 }
 .ficons .attach{
     display: flex;
 }
 
 .attach img{
+    width: 22px;
+    filter: contrast(3);
+
+    
+}
+
+.attach img:hover{
     width: 25px;
+    cursor: pointer;
+    filter: contrast(10);
 }
