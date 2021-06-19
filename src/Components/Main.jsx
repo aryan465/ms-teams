@@ -1,4 +1,4 @@
-import './Main.css';
+import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
 import chatlogo from '../Logo/chatlogo.png';
 import search from '../Logo/search.png';
@@ -50,7 +50,9 @@ function Main(){
                 <div className="attach">
                   <img src={attach} alt="" />
                 </div>
-                <img className="send" src={send} alt="" />
+                <img className="send" src={send} alt="" 
+                  onClick={()=>console.log("hi!")}
+                />
               </div>
             </div>
           </div>
