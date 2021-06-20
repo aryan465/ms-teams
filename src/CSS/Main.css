@@ -108,6 +108,7 @@ header input{
     width: 20px;
 }
 
+
 .right{
     background-color: rgb(245, 245, 245);
     width: 1100px;
@@ -123,6 +124,7 @@ header input{
     align-items: center;
     height: 55px;
     border-bottom: 1px solid rgba(142, 144, 146, 0.301);
+    box-shadow: 0px 15px 6px -15px aquamarine;
 }
 
 .rhead .meettitle{
@@ -169,6 +171,28 @@ li:hover{
     cursor: pointer;
 }
 
+
+.right .msgarea{
+    display: flex;
+    flex-direction: column;
+    height: 580px;
+    margin: 8px 4px 0 4px;
+    overflow-y: scroll;
+    border: 1px solid brown;
+}
+
+.msgarea .mymsg{
+    display: flex;
+    width: fit-content;
+    height: fit-content;
+    min-width: 20vw;
+    border-radius: 15px;
+    padding: 10px;
+    margin: 4px 4px 6px 4px;
+    background-color: rgb(150, 193, 223);
+}
+
+
 .right .rfoot{
     display: flex;
     flex-direction: column;
@@ -176,7 +200,7 @@ li:hover{
     height: 78px;
     margin-top: auto;
     padding-top: 5px;
-    /* background-color: rgba(194, 191, 191, 0.219); */
+
 }
 
 .rfoot input{

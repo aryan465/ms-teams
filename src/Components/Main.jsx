@@ -8,7 +8,6 @@ import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
 import attach from '../Logo/attach.png';
 
-
 function Main() {
 
   const [message,setMessage] = useState('');
@@ -38,7 +37,10 @@ function Main() {
             </div>
           </div>
         </div>
+
+
         <div className="right">
+
           <div className="rhead">
             <div className="meettitle">
               <img src={schedule} alt="" />
@@ -51,6 +53,19 @@ function Main() {
               </ul>
             </div>
           </div>
+
+          <div id = "msgarea" className="msgarea">
+            <div className="mymsg">
+              Hi! How are you
+            </div>
+            <div className="mymsg">
+              Hi! How are you
+            </div>
+            <div className="mymsg">
+              Hi! How are you
+            </div>
+          </div>
+
           <div className="rfoot">
 
             <input className="msg" type="text" placeholder="Type a new message.." 
@@ -59,7 +74,7 @@ function Main() {
               }}
 
               onKeyDown = {(e)=>{
-                // console.log(e.key)
+
                 if(e.key === 'Enter'){
                   (document.getElementById("send")).click()
                 }
@@ -74,7 +89,12 @@ function Main() {
               <img id="send" className="send" src={send} alt=""
                 onClick={()=>{
                   
-                  // console.log(message);
+                  var container = document.getElementById('msgarea');
+                  var msg = document.createElement("div");
+                  msg.classList.add('mymsg');
+                  msg.innerHTML=message;
+                  container.appendChild(msg);
+                  container.scrollTop = container.scrollHeight;
                   setMessage('');
                   
                 }}
