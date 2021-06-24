@@ -43,12 +43,16 @@ header input{
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
+    height: 100vh;
+    height: 92vh;
 }
 
 .home .components{
-    width: 50vw;
+    /* width: 50vw; */
+    /* height: 93vh; */
     border: 1px solid firebrick;
-    height: 93vh;
+    margin: auto;
 }
 
 .home .homeimage{
@@ -56,9 +60,10 @@ header input{
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 50vw;
-    height: 93.5vh;
+    /* width: 50vw;
+    height: 93.5vh; */
     border: 1px solid slateblue;
+    margin: auto;
 }
 
 
