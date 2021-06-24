@@ -6,26 +6,19 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import Link from '@material-ui/core/Link';
+// import Link from '@material-ui/core/Link';
 import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import {Link} from 'react-router-dom';
+import { blue } from '@material-ui/core/colors';
+import fbapp from '../config/fbConfig';
+import { useState } from 'react';
 
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -47,9 +40,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignUp() {
-  const classes = useStyles();
+const LinkStyle = {
+  textDecoration : 'none',
+  color : '#185ADB'
+}
 
+export default function SignUp() {
+  const [fname, setFname] = useState('');
+  const [lname, setLname] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // console.log(fname);
+  // console.log(fname);
+  // console.log(fname);
+  // console.log(password);
+
+  const handleSubmit = (e,email,password) => {
+    e.preventDefault();    
+
+    try {
+      fbapp.auth().createUserWithEmailAndPassword(email, password);      
+      // setCurrentUser(true);
+    } catch (error) {
+      alert(error);
+    }
+  };
+
+  const classes = useStyles();
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -72,6 +90,10 @@ export default function SignUp() {
                 id="firstName"
                 label="First Name"
                 autoFocus
+                value = {fname}
+                onChange = {(e)=>{
+                  setFname(e.target.value);
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -83,6 +105,10 @@ export default function SignUp() {
                 label="Last Name"
                 name="lastName"
                 autoComplete="lname"
+                value = {lname}
+                onChange = {(e)=>{
+                  setLname(e.target.value);
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -94,6 +120,10 @@ export default function SignUp() {
                 label="Email Address"
                 name="email"
                 autoComplete="email"
+                value = {email}
+                onChange = {(e)=>{
+                  setEmail(e.target.value);
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -106,6 +136,10 @@ export default function SignUp() {
                 type="password"
                 id="password"
                 autoComplete="current-password"
+                value = {password}
+                onChange = {(e)=>{
+                  setPassword(e.target.value);
+                }}
               />
             </Grid>
             {/* <Grid item xs={12}>
@@ -121,13 +155,16 @@ export default function SignUp() {
             variant="contained"
             color="primary"
             className={classes.submit}
-            onClick={()=>{console.log('clicked')}}
+            onClick={(e)=>{
+              handleSubmit(e,email,password);
+            }}
           >
             Sign Up
           </Button>
-          <Grid container justify="flex-end">
+          <Grid container justify="flex-e nd">
             <Grid item>
-              <Link href="#" variant="body2">
+              <Link to="/signin" 
+              style = {LinkStyle}>
                 Already have an account? Sign in
               </Link>
             </Grid>

@@ -8,6 +8,7 @@ import { Route,Switch } from 'react-router-dom';
 
 
 function Start() {
+
     return (
         <>
             <header>
@@ -24,9 +25,12 @@ function Start() {
                     <Route path="/signin" component = {SignIn} />
                 </Switch>
                 </div>
+
+
                 <div className="homeimage">
                     <img src={vc} alt="" />
                 </div>
+
             </div>
         </>
     );
