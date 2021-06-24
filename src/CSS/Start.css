@@ -51,8 +51,10 @@ header input{
 .home .components{
     /* width: 50vw; */
     /* height: 93vh; */
-    border: 1px solid firebrick;
+    /* border: 1px solid firebrick; */
     margin: auto;
+    /* box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
+    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
 }
 
 .home .homeimage{
@@ -69,4 +71,5 @@ header input{
 
 .home .homeimage img{
     width: 40vw;
+    min-width: 35vw;
 }
