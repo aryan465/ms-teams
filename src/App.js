@@ -1,12 +1,15 @@
-import './App.css';
+import './CSS/App.css';
 import Main from './Components/Main';
-import Auth from './Components/Auth';
+import Start from './Components/Start';
+import { Route, Switch } from 'react-router';
 
 function App() {
   return (
     <div className="App">
-      <Main></Main>
-      {/* <Auth></Auth> */}
+      {/* <Main></Main> */}
+      <Start/>
+
+
     </div>
   );
 }
