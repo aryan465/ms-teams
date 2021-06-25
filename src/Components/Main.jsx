@@ -7,6 +7,7 @@ import search from '../Logo/search.png';
 import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
 import attach from '../Logo/attach.png';
+import vclogo from '../Logo/vclogo.png';
 
 function Main() {
 
@@ -51,6 +52,9 @@ function Main() {
                 <li>Chat</li>
                 <li>Files</li>
               </ul>
+            </div>
+            <div className="rheadlogos">
+              <img src={vclogo} alt="" />
             </div>
           </div>
 

@@ -5,7 +5,7 @@
 
 }
 
-header{
+header .start{
     background-color: rgb(100, 50, 146);
     background-color: #2ebdc7;
     color: white;
@@ -16,18 +16,18 @@ header{
     height: 48px;
 }
 
-header div{
+header .start div{
     margin-left: 5px;
     font-size: 17px;
     font-weight: 500;
 }
 
-header img{
+header .start img{
     width: 30px;
     margin-left: 10px;
 }
 
-header input{
+header .start input{
     font-size: 14px;
     width: 40vw;
     height: 32px;

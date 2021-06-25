@@ -15,7 +15,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import {Link} from 'react-router-dom';
 import { blue } from '@material-ui/core/colors';
-import fbapp from '../config/fbConfig';
+import {auth, firestore} from '../config/fbConfig';
 import { useState } from 'react';
 
 
@@ -51,21 +51,31 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // console.log(fname);
-  // console.log(fname);
-  // console.log(fname);
-  // console.log(password);
 
-  const handleSubmit = (e,email,password) => {
+  const handleSignup = (e,email,password) => {
     e.preventDefault();    
 
     try {
-      fbapp.auth().createUserWithEmailAndPassword(email, password);      
+      auth.createUserWithEmailAndPassword(email, password);      
       // setCurrentUser(true);
     } catch (error) {
       alert(error);
     }
+
+    setFname('');
+    setLname('');
+    setEmail('');
+    setPassword('');
   };
+
+  // const createUserWithEmailAndPasswordHandler = async(e,email,password) =>{
+  //   e.preventDefault();
+
+  //   try{
+  //     const {user} = await auth.createUserWithEmailAndPassword(email,password);
+  //     ge
+  //   }
+  // }
 
   const classes = useStyles();
   return (
@@ -142,12 +152,7 @@ export default function SignUp() {
                 }}
               />
             </Grid>
-            {/* <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label="I want to receive inspiration, marketing promotions and updates via email."
-              />
-            </Grid> */}
+
           </Grid>
           <Button
             type="submit"
@@ -156,7 +161,7 @@ export default function SignUp() {
             color="primary"
             className={classes.submit}
             onClick={(e)=>{
-              handleSubmit(e,email,password);
+              handleSignup(e,email,password);
             }}
           >
             Sign Up
@@ -172,7 +177,7 @@ export default function SignUp() {
         </form>
       </div>
       <Box mt={5}>
-        {/* <Copyright /> */}
+
       </Box>
     </Container>
   );

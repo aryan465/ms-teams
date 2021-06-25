@@ -1,4 +1,5 @@
 import React from 'react';
+import {useState} from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -13,6 +14,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import {Link} from 'react-router-dom';
+import {auth} from '../config/fbConfig';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -41,9 +43,27 @@ const LinkStyle = {
 }
 
 export default function SignIn() {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignin = (e,email,password) => {
+    e.preventDefault();
+    try {
+      auth.signInWithEmailAndPassword(email, password);      
+      // setCurrentUser(true);
+      console.log("success");
+
+    } catch (error) {
+      alert(error);
+    }
+
+    setEmail('');
+    setPassword('');
+
+  };
+
   const classes = useStyles();
-
-
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -65,6 +85,10 @@ export default function SignIn() {
             name="email"
             autoComplete="email"
             autoFocus
+            value = {email}
+            onChange = {(e)=>{
+              setEmail(e.target.value);
+            }}
             
           />
           <TextField
@@ -77,20 +101,27 @@ export default function SignIn() {
             type="password"
             id="password"
             autoComplete="current-password"
+            value = {password}
+            onChange = {(e)=>{
+              setPassword(e.target.value);
+            }}
           />
           <FormControlLabel
             control={<Checkbox value="remember" color="primary" />}
             label="Remember me"
           />
-          <Button
+          <Link to = "/chatwindow"><Button
             type="submit"
             fullWidth
             variant="contained"
             color="primary"
             className={classes.submit}
+            onClick = {(e)=>{
+              handleSignin(e,email,password);
+            }}
           >
             Sign In
-          </Button>
+          </Button></Link>
           <Grid container>
             <Grid item xs>
               <Link href="#" style={LinkStyle}>

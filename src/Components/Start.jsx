@@ -11,7 +11,7 @@ function Start() {
 
     return (
         <>
-            <header>
+            <header className="start">
                 <img src={titlelogo} alt="" />
                 <div className="name">Microsoft Teams</div>
 
