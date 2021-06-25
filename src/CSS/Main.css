@@ -171,14 +171,25 @@ li:hover{
     cursor: pointer;
 }
 
+.rheadlogos img{
+    width: 35px;
+    margin: auto;
+}
+
+.rheadlogos img:hover{
+    cursor: pointer;
+    width: 38px;
+
+}
+
 
 .right .msgarea{
     display: flex;
     flex-direction: column;
     height: 580px;
-    margin: 8px 4px 0 4px;
+    margin: 0 4px 0 4px;
     overflow-y: scroll;
-    border: 1px solid brown;
+    /* border: 1px solid brown; */
 }
 
 .msgarea .mymsg{
@@ -188,7 +199,7 @@ li:hover{
     min-width: 20vw;
     border-radius: 15px;
     padding: 10px;
-    margin: 4px 4px 6px 4px;
+    margin: 8px 4px 6px 4px;
     background-color: rgb(150, 193, 223);
 }
 

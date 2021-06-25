@@ -6,8 +6,13 @@ import { Route, Switch } from 'react-router';
 function App() {
   return (
     <div className="App">
-      {/* <Main/> */}
-      <Start/>
+
+    {/* <Switch>
+    <Route path = "/" component={Start}></Route>
+    <Route path = "/chatwindow" component={Main}></Route>
+    </Switch>  */}
+    {/* <Start/> */}
+    <Main/>
 
 
     </div>

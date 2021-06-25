@@ -12,6 +12,7 @@ const GetStarted = ()=>{
             Already have an account.
             <Link to="signin"><button>Sign In</button></Link>
         </div>
+        <a href ="../Components/Main.jsx"><button>Chat</button></a>
     </div>
 
     );
