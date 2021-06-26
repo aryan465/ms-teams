@@ -54,7 +54,7 @@ function Main() {
               </ul>
             </div>
             <div className="rheadlogos">
-              <img src={vclogo} alt="" />
+              {/* <img src={vclogo} alt="" /> */}
             </div>
           </div>
 
