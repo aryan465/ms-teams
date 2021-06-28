@@ -79,7 +79,6 @@ header input{
 .middle{
     background-color: rgb(232, 240, 255);
     width: 380px;
-    /* width: 490px; */
     height: 93.5vh;
     box-shadow: 0 0 6px 0 rgba(91, 91, 94, 0.733);
     
@@ -172,7 +171,7 @@ li:hover{
     cursor: pointer;
 }
 
-/* .rheadlogos img{
+.rheadlogos img{
     width: 35px;
     margin: auto;
 }
@@ -181,7 +180,7 @@ li:hover{
     cursor: pointer;
     width: 38px;
 
-} */
+}
 
 
 .right .msgarea{

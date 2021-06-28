@@ -15,7 +15,7 @@ function Main() {
 
   return (
     <>
-      <header>
+      <header className="main">
 
         <img src={titlelogo} alt="" />
         <div className="name">Microsoft Teams</div>
@@ -54,7 +54,7 @@ function Main() {
               </ul>
             </div>
             <div className="rheadlogos">
-              {/* <img src={vclogo} alt="" /> */}
+              <img src={vclogo} alt="" />
             </div>
           </div>
 
