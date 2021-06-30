@@ -1,5 +1,5 @@
 import {useState} from 'react';
-
+import { Link } from 'react-router-dom';
 import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
 import chatlogo from '../Logo/chatlogo.png';
@@ -13,6 +13,12 @@ function Main() {
 
   const [message,setMessage] = useState('');
 
+  // const videoCallButtonHandler = ()=>{
+  //    const App = document.querySelector('App');
+  //    App.createElement('div')
+  // }
+  
+    
   return (
     <>
       <header className="main">
@@ -54,7 +60,9 @@ function Main() {
               </ul>
             </div>
             <div className="rheadlogos">
-              <img src={vclogo} alt="" />
+              <Link to = '/vc'><img src={vclogo} alt="" 
+
+              /></Link>
             </div>
           </div>
 
