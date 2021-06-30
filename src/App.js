@@ -1,5 +1,6 @@
 import './CSS/App.css';
-import Main from './Components/Main';
+import Chatwindow from './Components/Chatwindow';
+// import Webcall from './Components/Webcall';
 import Start from './Components/Start';
 import { Route, Switch } from 'react-router';
 
@@ -8,16 +9,17 @@ function App() {
   if (val ===0){
   return (
     <div className="App">
-
-
-    <Main/>
-
-
+    <Chatwindow/>
+    {/* <Webcall/> */}
     </div>
   );}
+
   else{
     return(
+      <div className="App">
       <Start/>
+      </div>
+      
     );
   }
 }
