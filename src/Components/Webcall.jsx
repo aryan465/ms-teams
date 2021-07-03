@@ -1,6 +1,6 @@
 import '../CSS/web.css';
 import { firestore } from '../config/fbConfig';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 function Webcall() {
 
