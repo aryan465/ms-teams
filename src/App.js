@@ -1,21 +1,38 @@
 import './CSS/App.css';
 import Chatwindow from './Components/Chatwindow';
-// import Webcall from './Components/Webcall';
 import Start from './Components/Start';
-import { Route, Switch } from 'react-router';
+import { useState, useEffect } from 'react';
+import {auth} from './config/fbConfig';
+import { Redirect } from 'react-router';
+
+
 
 function App() {
-  let val = 0;
+
+  const[val,setVal] = useState(0);
+  
+  // useEffect((val)=>{
+  //   if (auth.currentUser!==null){
+  //     console.log(auth);
+  //     setVal(0);
+  //     console.log(val);
+  //     <Redirect to = '/'/>
+  //   }
+  //   console.log(13)
+
+  // },[val])
+
   if (val ===0){
   return (
     <div className="App">
     <Chatwindow/>
-    {/* <Webcall/> */}
+
     </div>
   );}
 
   else{
     return(
+    
       <div className="App">
       <Start/>
       </div>

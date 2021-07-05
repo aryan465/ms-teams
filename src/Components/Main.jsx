@@ -43,6 +43,13 @@ function Main() {
               <img src={search} alt="" />
             </div>
           </div>
+
+          <div className="meets">
+            <div className="meet">
+              <img src={schedule} alt="" />
+              <span>Meeting with Lorem Ipsum</span>
+            </div>
+          </div>
         </div>
 
 
@@ -70,8 +77,14 @@ function Main() {
             <div className="mymsg">
               Hi! How are you
             </div>
+            <div className="sendermsg">
+              hello!!
+            </div>
             <div className="mymsg">
               Hi! How are you
+            </div>
+            <div className="sendermsg">
+              hello!!
             </div>
             <div className="mymsg">
               Hi! How are you

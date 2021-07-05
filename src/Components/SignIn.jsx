@@ -1,5 +1,5 @@
 import React from 'react';
-import {useState} from 'react';
+import {useState, useContext} from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -13,8 +13,9 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import {Link} from 'react-router-dom';
+import {Link, Redirect} from 'react-router-dom';
 import {auth} from '../config/fbConfig';
+
 
 
 const useStyles = makeStyles((theme) => ({
@@ -52,7 +53,7 @@ export default function SignIn() {
     try {
       auth.signInWithEmailAndPassword(email, password);      
       // setCurrentUser(true);
-      console.log("success");
+    
 
     } catch (error) {
       alert(error);
@@ -110,7 +111,7 @@ export default function SignIn() {
             control={<Checkbox value="remember" color="primary" />}
             label="Remember me"
           />
-          <Link to = "/chatwindow"><Button
+          <Button
             type="submit"
             fullWidth
             variant="contained"
@@ -118,10 +119,15 @@ export default function SignIn() {
             className={classes.submit}
             onClick = {(e)=>{
               handleSignin(e,email,password);
+
+              if(auth){
+                console.log("yes");
+
+              }
             }}
           >
             Sign In
-          </Button></Link>
+          </Button>
           <Grid container>
             <Grid item xs>
               <Link href="#" style={LinkStyle}>
