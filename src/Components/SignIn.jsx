@@ -1,5 +1,6 @@
 import React from 'react';
-import {useState, useContext} from 'react';
+import '../CSS/Start.css';
+import { useState, useContext } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -13,10 +14,10 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import {Link, Redirect} from 'react-router-dom';
-import {auth} from '../config/fbConfig';
+import { Link, Redirect } from 'react-router-dom';
+import { auth } from '../config/fbConfig';
 
-
+import { useHistory } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -39,8 +40,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const LinkStyle = {
-  textDecoration : 'none',
-  color : '#185ADB'
+  textDecoration: 'none',
+  color: '#185ADB'
 }
 
 export default function SignIn() {
@@ -48,12 +49,14 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignin = (e,email,password) => {
+  const handleSignin = (e, email, password) => {
     e.preventDefault();
     try {
-      auth.signInWithEmailAndPassword(email, password);      
-      // setCurrentUser(true);
-    
+      auth.signInWithEmailAndPassword(email, password).then(()=>{
+        
+        history.push('/chat')
+        console.log(auth.currentUser);
+      });
 
     } catch (error) {
       alert(error);
@@ -64,8 +67,11 @@ export default function SignIn() {
 
   };
 
+  let history = useHistory();
   const classes = useStyles();
   return (
+    <div className="home">
+    <div className="components">
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
@@ -73,7 +79,7 @@ export default function SignIn() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign in
+          Sign In
         </Typography>
         <form className={classes.form} noValidate>
           <TextField
@@ -86,11 +92,11 @@ export default function SignIn() {
             name="email"
             autoComplete="email"
             autoFocus
-            value = {email}
-            onChange = {(e)=>{
+            value={email}
+            onChange={(e) => {
               setEmail(e.target.value);
             }}
-            
+
           />
           <TextField
             variant="outlined"
@@ -102,8 +108,8 @@ export default function SignIn() {
             type="password"
             id="password"
             autoComplete="current-password"
-            value = {password}
-            onChange = {(e)=>{
+            value={password}
+            onChange={(e) => {
               setPassword(e.target.value);
             }}
           />
@@ -117,14 +123,10 @@ export default function SignIn() {
             variant="contained"
             color="primary"
             className={classes.submit}
-            onClick = {(e)=>{
-              handleSignin(e,email,password);
-
-              if(auth){
-                console.log("yes");
-
-              }
-            }}
+            onClick={(e) => {
+              handleSignin(e, email, password);
+              
+              }}
           >
             Sign In
           </Button>
@@ -142,9 +144,11 @@ export default function SignIn() {
           </Grid>
         </form>
       </div>
-      <Box mt={8}>
-        {/* <Copyright /> */}
+      <Box mt={5}>
+
       </Box>
     </Container>
+    </div>
+    </div>
   );
 }

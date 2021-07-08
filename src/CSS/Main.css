@@ -1,12 +1,11 @@
 header{
     background-color: rgb(100, 50, 146);
-    /* background-color: #46e4f0; */
     color: white;
     display: flex;
     align-items: center;
-    /* justify-content: center; */
     flex-direction: row;
     height: 48px;
+    width: 100vw;
 }
 
 header div{
@@ -32,6 +31,24 @@ header input{
     background-color: rgb(250, 244, 255);
 }
 
+header .avatar{
+    border: 2px solid rgb(219, 206, 228);
+    border-radius: 20px;
+    background-color: rgb(226, 95, 55);
+    display: flex;
+    width: 35px;
+    height: 35px;
+    margin-right: 25px;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar:hover{
+    cursor: pointer;
+    box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.733);
+
+}
+
 .window{
     display: flex;
     flex-direction: row;
@@ -41,7 +58,6 @@ header input{
     width: 70px;
     min-width: 65px;
     height: 93.5vh;
-    /* background-color: rgb(240, 240, 240); */
     background-color: rgb(238, 244, 253);
     display: flex;
     flex-direction: column;
@@ -84,7 +100,6 @@ header input{
     min-width: 235px;
     height: 93.5vh;
     box-shadow: 0 0 6px 0 rgba(91, 91, 94, 0.733);
-    /* display: none; */
     
 }
 
@@ -92,7 +107,6 @@ header input{
     display: flex;
     flex-direction: row;
     align-items: center;
-    /* justify-content: center; */
     height: 55px;
     border-bottom: 1px solid rgba(100, 148, 237, 0.301);
 }
@@ -164,7 +178,7 @@ header input{
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-left: 5px;
+    margin-left: 8px;
 }
 
 .meettitle img{
@@ -172,7 +186,7 @@ header input{
 }
 
 .meettitle h3{
-    margin-left: 2px;
+    margin-left: 4px;
     font-weight: 500;
     font-size: 18px;
 }
@@ -180,6 +194,7 @@ header input{
 /* files after meettitle */
 .files{
     margin-left:15px;
+    /* display: none; */
 }
 .files ul{
     display: flex;
@@ -204,6 +219,9 @@ li:hover{
     font-weight: 600;
     cursor: pointer;
 }
+.rheadlogos{
+    margin: 0 4vw 0 auto;
+}
 
 .rheadlogos img{
     width: 35px;
@@ -224,17 +242,16 @@ li:hover{
     margin: 0 4px 0 4px;
     overflow-y: scroll;
     padding-top: 10px;
-    /* border: 1px solid brown; */
+    padding-right: 4px;
 }
 
 .msgarea .mymsg{
     display: flex;
     width: fit-content;
     height: fit-content;
-    /* min-width: 20vw; */
     border-radius: 5px;
     padding: 8px 14px;
-    margin: 2px 6px 2px auto;
+    margin: 2px 6vw 2px auto;
     background-color: rgb(182, 210, 230);
     font-size: 14px;
 }
@@ -243,10 +260,9 @@ li:hover{
     display: flex;
     width: fit-content;
     height: fit-content;
-    /* min-width: 20vw; */
     border-radius: 5px;
     padding: 8px 14px;
-    margin: 2px auto 2px 6px;
+    margin: 2px auto 2px 6vw;
     background-color: rgb(168, 238, 223);
     font-size: 14px;
 }
@@ -281,7 +297,6 @@ li:hover{
     align-items: center;
     width: 59vw;
     max-width: 890px;
-    /* border: 2px solid greenyellow; */
     margin-top: auto;
     margin-bottom: auto;
 
@@ -294,7 +309,7 @@ li:hover{
 }
 
 .send:hover{
-    /* background-color: rgba(137, 43, 226, 0.356); */
+
     width: 25px;
     cursor: pointer;
 }

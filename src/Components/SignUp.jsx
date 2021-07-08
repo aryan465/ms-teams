@@ -1,23 +1,17 @@
-
 import React from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-// import Link from '@material-ui/core/Link';
 import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import {Link} from 'react-router-dom';
-import { blue } from '@material-ui/core/colors';
+import {Link, useHistory} from 'react-router-dom';
 import {auth, firestore} from '../config/fbConfig';
 import { useState } from 'react';
-
 
 
 const useStyles = makeStyles((theme) => ({
@@ -51,13 +45,32 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  let history = useHistory();
+
+  const makeuserdocs = ()=>{
+    const users = firestore.collection('users');
+    users.doc(auth.currentUser.email).set({
+      name: auth.currentUser.displayName,
+      uid: auth.currentUser.uid,
+      email:auth.currentUser.email
+    })
+  }
 
   const handleSignup = (e,email,password) => {
     e.preventDefault();    
 
     try {
-      auth.createUserWithEmailAndPassword(email, password);      
-      // setCurrentUser(true);
+      auth.createUserWithEmailAndPassword(email, password).then(()=>{
+        var user = auth.currentUser;
+        user.updateProfile({
+          displayName: fname+' '+lname,
+        }).then(()=>{
+          
+          makeuserdocs()  
+          history.push('/signin')
+        })
+      })     
+
     } catch (error) {
       alert(error);
     }
@@ -68,17 +81,11 @@ export default function SignUp() {
     setPassword('');
   };
 
-  // const createUserWithEmailAndPasswordHandler = async(e,email,password) =>{
-  //   e.preventDefault();
-
-  //   try{
-  //     const {user} = await auth.createUserWithEmailAndPassword(email,password);
-  //     ge
-  //   }
-  // }
 
   const classes = useStyles();
   return (
+    <div className="home">
+    <div className="components">
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
@@ -166,7 +173,7 @@ export default function SignUp() {
           >
             Sign Up
           </Button>
-          <Grid container justify="flex-e nd">
+          <Grid container justify="flex-end">
             <Grid item>
               <Link to="/signin" 
               style = {LinkStyle}>
@@ -180,5 +187,7 @@ export default function SignUp() {
 
       </Box>
     </Container>
+    </div>
+    </div>
   );
 }

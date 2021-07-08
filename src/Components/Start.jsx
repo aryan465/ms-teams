@@ -1,10 +1,9 @@
 import '../CSS/Start.css';
 import titlelogo from '../Logo/video-call (1).png';
 import vc from '../Logo/vcl.jpg';
-import GetStarted from '../Components/GetStarted';
-import SignUp from '../Components/SignUp';
-import SignIn from '../Components/SignIn';
-import { Route,Switch } from 'react-router-dom';
+import Container from '@material-ui/core/Container';
+import Button from '@material-ui/core/Button';
+import { Route, Switch, Redirect, Link } from 'react-router-dom';
 
 
 function Start() {
@@ -16,14 +15,34 @@ function Start() {
                 <div className="name">Microsoft Teams</div>
 
             </div>
-
             <div className="home">
                 <div className="components">
-                <Switch>
-                    <Route exact path="/" component = {GetStarted}/>
-                    <Route path="/signup" component = {SignUp} />
-                    <Route path="/signin" component = {SignIn} />
-                </Switch>
+
+                    <Container component="main" maxWidth="xs">
+                        <div className="getstarted">
+                            <div className="new">
+                                <span className="btntxt">New To Teams..?</span>
+                                <Link to="/signup">
+                                    <Button
+                                        type="submit"
+                                        fullWidth
+                                        variant="contained"
+                                        color="secondary">Sign Up</Button>
+                                </Link>
+                            </div>
+                            <div className="sg">
+                                <span className="btntxt">Already have an account...</span>
+                                <Link to="signin">
+                                    <Button
+                                        type="submit"
+                                        fullWidth
+                                        variant="contained"
+                                        color="primary">Sign In</Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </Container>
+
                 </div>
 
 

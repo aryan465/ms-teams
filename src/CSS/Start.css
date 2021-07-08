@@ -44,27 +44,58 @@ div .start input{
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    height: 100vh;
     height: 92vh;
 }
 
-.home .components{
-    /* width: 50vw; */
-    /* height: 93vh; */
-    /* border: 1px solid firebrick; */
+.components{
     margin: auto;
-    /* box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
+    /* height: 50vh; */
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+
 }
+
+.getstarted{
+    height: 500px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+
+}
+
+.new{
+    margin: 20px 0 20px 0;
+    text-align: center;
+    
+}
+
+.sg{
+    margin: 20px 0 20px 0;
+    text-align: center;
+
+}
+
+.btntxt{
+    font-size: 18px;
+    margin-bottom: 70px;
+    text-decoration: none;
+    color: blue;
+    
+}
+
+ .MuiButton-containedPrimary{
+    color: #2ebdc7;
+    text-decoration: none;
+    border: none;
+}
+
 
 .home .homeimage{
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* width: 50vw;
-    height: 93.5vh; */
-    /* border: 1px solid slateblue; */
     margin: auto;
 }
 
@@ -72,6 +103,5 @@ div .start input{
 .home .homeimage img{
     width: 40vw;
     max-width: 750px;
-
     min-width: 35vw;
 }
