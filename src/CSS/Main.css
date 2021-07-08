@@ -22,6 +22,7 @@ header img{
 header input{
     font-size: 14px;
     width: 40vw;
+    min-width: 370px;
     height: 32px;
     margin-left: 400px;
     margin: auto;
@@ -34,13 +35,13 @@ header input{
 header .avatar{
     border: 2px solid rgb(219, 206, 228);
     border-radius: 20px;
-    background-color: rgb(226, 95, 55);
+    background-color: rgb(6, 156, 136);
     display: flex;
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 32px;
     margin-right: 25px;
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
 }
 
 .avatar:hover{
@@ -126,6 +127,10 @@ header .avatar{
     width: 20px;
 }
 
+.mhead .logos img:hover{
+    width: 21px;
+    cursor: pointer;
+}
 
 .middle .meets{
     /* border: 1px solid black; */

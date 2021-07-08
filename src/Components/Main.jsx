@@ -8,17 +8,20 @@ import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
 import attach from '../Logo/attach.png';
 import vclogo from '../Logo/vclogo.png';
-import { auth } from '../config/fbConfig';
+import { auth, firestore } from '../config/fbConfig';
 
 
 
 function Main() {
 
   const [message,setMessage] = useState('');
+  const[people, setPeople] = useState();
 
   let history = useHistory();
-  
-  console.log(auth.currentUser)
+
+  let mail = (auth.currentUser.email)
+  console.log(mail)
+  console.log(firestore.collection("users").doc(mail).name)
 
   if(auth.currentUser===null){
     return <Redirect to='/'/>;
@@ -33,9 +36,9 @@ function Main() {
         <img src={titlelogo} alt="" />
         <div className="name">Microsoft Teams</div>
 
-        <input type="text" placeholder="Search" />
+        <input type="text" placeholder="Search for people..." />
 
-        <div className="avatar">a</div>
+        <div className="avatar">{auth.currentUser.displayName.slice(0,1)}</div>
         <button
         onClick={(e)=>{
           e.preventDefault();
@@ -60,7 +63,9 @@ function Main() {
           <div className="mhead">
             <h3>Chat</h3>
             <div className="logos">
-              <img src={search} alt="" />
+              <img src={search} alt="" 
+                onClick
+              />
             </div>
           </div>
 
