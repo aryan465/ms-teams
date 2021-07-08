@@ -1,44 +1,48 @@
 import './CSS/App.css';
 import Chatwindow from './Components/Chatwindow';
 import Start from './Components/Start';
+import SignIn from './Components/SignIn';
+import SignUp from './Components/SignUp';
 import { useState, useEffect } from 'react';
-import {auth} from './config/fbConfig';
+import { auth } from './config/fbConfig';
 import { Redirect } from 'react-router';
+import { Route, Switch } from 'react-router-dom';
 
 
 
 function App() {
 
-  const[val,setVal] = useState(0);
-  
-  // useEffect((val)=>{
-  //   if (auth.currentUser!==null){
-  //     console.log(auth);
-  //     setVal(0);
-  //     console.log(val);
-  //     <Redirect to = '/'/>
-  //   }
-  //   console.log(13)
 
-  // },[val])
+  // const [val, setVal] = useState(0);
+  // if (val === 1) {
+  //   return (
+  //     <div className="App">
+  //       <Chatwindow />
 
-  if (val ===0){
-  return (
+  //     </div>
+  //   );
+  // }
+
+  // else {
+  //   return (
+
+  //     <div className="App">
+  //       <Start />
+  //     </div>
+
+  //   );
+  // }
+
+  return(
     <div className="App">
-    <Chatwindow/>
-
+      <Switch>
+        <Route exact path = '/' component={Start}></Route>
+        <Route path = '/signin' component={SignIn}></Route>
+        <Route path = '/signup' component={SignUp}></Route>
+        <Route path = '/chat' component={Chatwindow}></Route>
+      </Switch>
     </div>
-  );}
-
-  else{
-    return(
-    
-      <div className="App">
-      <Start/>
-      </div>
-      
-    );
-  }
+  );
 }
 
 export default App;

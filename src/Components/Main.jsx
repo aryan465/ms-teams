@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory, Redirect } from 'react-router-dom';
 import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
 import chatlogo from '../Logo/chatlogo.png';
@@ -8,25 +8,45 @@ import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
 import attach from '../Logo/attach.png';
 import vclogo from '../Logo/vclogo.png';
+import { auth } from '../config/fbConfig';
+
+
 
 function Main() {
 
   const [message,setMessage] = useState('');
 
-  // const videoCallButtonHandler = ()=>{
-  //    const App = document.querySelector('App');
-  //    App.createElement('div')
-  // }
+  let history = useHistory();
   
-    
+  console.log(auth.currentUser)
+
+  if(auth.currentUser===null){
+    return <Redirect to='/'/>;
+  }
+
+
   return (
     <>
       <header className="main">
+      
 
         <img src={titlelogo} alt="" />
         <div className="name">Microsoft Teams</div>
 
         <input type="text" placeholder="Search" />
+
+        <div className="avatar">a</div>
+        <button
+        onClick={(e)=>{
+          e.preventDefault();
+          auth.signOut().then(()=>{
+            
+            console.log('user out')
+            history.push('/');
+          })
+        }}
+        >LogOut</button>
+
       </header>
 
       <div className="window">
@@ -67,7 +87,7 @@ function Main() {
               </ul>
             </div>
             <div className="rheadlogos">
-              <Link to = '/vc'><img src={vclogo} alt="" 
+              <Link to = '/chat/vc'><img src={vclogo} alt="" 
 
               /></Link>
             </div>
