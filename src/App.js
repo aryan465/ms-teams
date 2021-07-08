@@ -13,26 +13,6 @@ import { Route, Switch } from 'react-router-dom';
 function App() {
 
 
-  // const [val, setVal] = useState(0);
-  // if (val === 1) {
-  //   return (
-  //     <div className="App">
-  //       <Chatwindow />
-
-  //     </div>
-  //   );
-  // }
-
-  // else {
-  //   return (
-
-  //     <div className="App">
-  //       <Start />
-  //     </div>
-
-  //   );
-  // }
-
   return(
     <div className="App">
       <Switch>
