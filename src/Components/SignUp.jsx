@@ -52,7 +52,9 @@ export default function SignUp() {
     users.doc(auth.currentUser.email).set({
       name: auth.currentUser.displayName,
       uid: auth.currentUser.uid,
-      email:auth.currentUser.email
+      email:auth.currentUser.email,
+      chatusers:[]
+      
     })
   }
 

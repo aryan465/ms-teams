@@ -55,7 +55,7 @@ export default function SignIn() {
       auth.signInWithEmailAndPassword(email, password).then(()=>{
         
         history.push('/chat')
-        console.log(auth.currentUser);
+        // console.log(auth.currentUser);
       });
 
     } catch (error) {
