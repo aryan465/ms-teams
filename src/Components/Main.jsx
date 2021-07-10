@@ -16,6 +16,8 @@ function Main() {
 
   const [message, setMessage] = useState('');
   const [people, setPeople] = useState('');
+  const [done, setDone] = useState(false);
+  const [currentchatuser, SetCurrentchatuser] = useState('');
 
   let history = useHistory();
 
@@ -23,17 +25,20 @@ function Main() {
     return <Redirect to='/' />;
   }
 
-  // window.onload = () => {
-  console.log(1234)
-  firestore.collection("users").doc(auth.currentUser.email).get()
-    .then(snapshot => {
-      const chatusers = snapshot.data()["chatusers"]
-      chatusers.forEach(chatuser => {
-        console.log(chatuser)
-        createMeetUser(chatuser)
-      })
+  if (!done) {
+    setTimeout(() => {
+      firestore.collection("users").doc(auth.currentUser.email).get()
+        .then(snapshot => {
+          const chatusers = snapshot.data()["chatusers"]
+          chatusers.forEach(chatuser => {
+            createMeetUser(chatuser)
+          })
+        })
+      setDone(true);
     })
-  // }
+  }
+
+
   const createPeopleElement = (docid) => {
     const peoples = document.getElementById('peoples')
     let peopleDiv = document.createElement('div');
@@ -84,6 +89,7 @@ function Main() {
                     if (doc.id !== auth.currentUser.email) {
                       if (doc.id.includes(e.target.value)) {
                         createPeopleElement(doc.id);
+
                       }
                     }
                   })
@@ -117,10 +123,21 @@ function Main() {
 
                     createMeetUser(thisUser);
 
-                    chatusers.push(thisUser)
+                    chatusers.push(thisUser);
                     console.log(chatusers)
                     firestore.collection("users").doc(auth.currentUser.email).update({
-                      chatusers: chatusers
+                      chatusers: chatusers,
+                      [thisUser.substring(0,thisUser.indexOf('@'))]: []
+                    })
+
+                    firestore.collection("users").doc(thisUser).get().then(e => {
+                      const clientchatusers = e.data()["chatusers"]
+                      clientchatusers.push((auth.currentUser.email));
+
+                      firestore.collection("users").doc(thisUser).update({
+                        chatusers: clientchatusers,
+                        [auth.currentUser.email.substring(0,auth.currentUser.email.indexOf('@'))]: []
+                      })
                     })
 
                   }
@@ -175,15 +192,18 @@ function Main() {
               if (e.target.id === "") {
 
                 const chatUser = e.target.innerHTML
+                SetCurrentchatuser(chatUser);
+                const minChatuser = chatUser.substring(0,chatUser.indexOf("@"));
 
-                firestore.collection("users").doc(auth.currentUser.email).get().then(() => {
-                  
-
-                })
                 const msgarea = document.getElementById("msgarea");
                 const meetname = document.getElementById("meetname")
-                meetname.innerHTML = `Meeting with ${chatUser.substring(0, chatUser.indexOf("@"))}`;
+                meetname.innerHTML = `Meeting with ${minChatuser}`;
                 msgarea.innerHTML = "";
+
+                firestore.collection("users").doc(auth.currentUser.email).get().then(snapshot => {
+                  const currentchats = snapshot.data()[minChatuser]
+                  console.log(currentchats)
+                })
               }
 
               else {
@@ -197,6 +217,7 @@ function Main() {
               <img src={schedule} alt="" />
               <span>Meeting with Lorem Ipsum</span>
             </div> */}
+
           </div>
         </div>
 

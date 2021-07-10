@@ -3,7 +3,7 @@ import titlelogo from '../Logo/video-call (1).png';
 import vc from '../Logo/vcl.jpg';
 import Container from '@material-ui/core/Container';
 import Button from '@material-ui/core/Button';
-import { Route, Switch, Redirect, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 
 function Start() {
