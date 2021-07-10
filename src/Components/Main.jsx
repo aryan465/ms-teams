@@ -23,12 +23,33 @@ function Main() {
     return <Redirect to='/' />;
   }
 
-  const createPeopleElement = (doc) => {
+  // window.onload = () => {
+  console.log(1234)
+  firestore.collection("users").doc(auth.currentUser.email).get()
+    .then(snapshot => {
+      const chatusers = snapshot.data()["chatusers"]
+      chatusers.forEach(chatuser => {
+        console.log(chatuser)
+        createMeetUser(chatuser)
+      })
+    })
+  // }
+  const createPeopleElement = (docid) => {
     const peoples = document.getElementById('peoples')
     let peopleDiv = document.createElement('div');
     peopleDiv.classList.add('people')
-    peopleDiv.innerHTML = doc.id;
+    peopleDiv.innerHTML = docid;
     peoples.appendChild(peopleDiv);
+  }
+
+  const createMeetUser = (thisUser) => {
+    const meets = document.getElementById("meets");
+    const meet = document.createElement("div")
+    meet.classList.add("meet");
+    meet.id = "meet";
+
+    meet.innerHTML = `<img src=${schedule} /><span>${thisUser}</span>`;
+    meets.appendChild(meet)
   }
 
 
@@ -60,10 +81,11 @@ function Main() {
                 peoples.innerHTML = "";
                 firestore.collection('users').get().then((snapshot) => {
                   snapshot.docs.forEach(doc => {
-                    if(doc.id!==auth.currentUser.email){
-                    if (doc.id.includes(e.target.value)) {
-                      createPeopleElement(doc);
-                    }}
+                    if (doc.id !== auth.currentUser.email) {
+                      if (doc.id.includes(e.target.value)) {
+                        createPeopleElement(doc.id);
+                      }
+                    }
                   })
                 })
               }
@@ -78,17 +100,35 @@ function Main() {
 
           <div id='peoples' className="peoples"
             onClick={(e) => {
+
+
               console.log(e.target.innerHTML)
               const thisUser = e.target.innerHTML;
-              const meets = document.getElementById("meets");
-              const meet = document.createElement("div")
+
+              firestore.collection("users").doc(auth.currentUser.email).get()
+                .then(snapshot => {
+                  const chatusers = snapshot.data()["chatusers"]
+
+                  if (chatusers.includes(thisUser)) {
+                    console.log("Already chatting!")
+                  }
+
+                  else {
+
+                    createMeetUser(thisUser);
+
+                    chatusers.push(thisUser)
+                    console.log(chatusers)
+                    firestore.collection("users").doc(auth.currentUser.email).update({
+                      chatusers: chatusers
+                    })
+
+                  }
+
+                })
+
+
               const peoples = document.getElementById("peoples")
-              meet.classList.add("meet");
-              meet.id = "meet";
-
-              meet.innerHTML = `<img src=${schedule} /><span>${thisUser}</span>`;
-
-              meets.appendChild(meet)
               setPeople('')
               peoples.style.display = "none"
             }}
@@ -133,11 +173,16 @@ function Main() {
             onClick={(e) => {
 
               if (e.target.id === "") {
+
                 const chatUser = e.target.innerHTML
-                console.log(chatUser);
+
+                firestore.collection("users").doc(auth.currentUser.email).get().then(() => {
+                  
+
+                })
                 const msgarea = document.getElementById("msgarea");
                 const meetname = document.getElementById("meetname")
-                meetname.innerHTML = `Meeting with ${chatUser.substring(0, chatUser.indexOf("@"))}`
+                meetname.innerHTML = `Meeting with ${chatUser.substring(0, chatUser.indexOf("@"))}`;
                 msgarea.innerHTML = "";
               }
 
@@ -147,11 +192,11 @@ function Main() {
             }}
           >
 
-
-            <div className="meet" id="meet">
+            {/* Syntax of the meet element in middle segment */}
+            {/* <div className="meet" id="meet">
               <img src={schedule} alt="" />
               <span>Meeting with Lorem Ipsum</span>
-            </div>
+            </div> */}
           </div>
         </div>
 
