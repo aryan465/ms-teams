@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState , useEffect} from 'react';
 import { Link, useHistory, Redirect } from 'react-router-dom';
 import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
@@ -18,6 +18,8 @@ function Main() {
   const [people, setPeople] = useState('');
   const [done, setDone] = useState(false);
   const [currentchatuser, SetCurrentchatuser] = useState('');
+  const [chatlength, setChatlength] = useState(null);
+  const [testuser, setTestuser] = useState("");
 
   let history = useHistory();
 
@@ -39,7 +41,59 @@ function Main() {
   }
 
 
-  const createPeopleElement = (docid) => {
+
+    firestore.collection("users").doc(auth.currentUser.email).onSnapshot(snapshot => {
+      
+      const me = auth.currentUser.email
+      const minMe = me.substring(0, me.indexOf("@"))
+      const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"));
+      
+      let changes = snapshot.data()
+      
+      try {
+         
+        if (minChatuser !== testuser || chatlength !== changes[minChatuser].length) {
+          
+          const msgarea = document.getElementById("msgarea");
+          msgarea.innerHTML = "";
+          
+          changes[minChatuser].forEach(chatinfo => {
+            
+            if (chatinfo.user === minMe) {
+              let mymsg = document.createElement("div")
+              mymsg.classList.add("mymsg")
+              mymsg.innerHTML = chatinfo.chat
+              msgarea.appendChild(mymsg)
+            }
+            
+            else {
+              let sendermsg = document.createElement("div")
+              sendermsg.classList.add("sendermsg")
+              sendermsg.innerHTML = chatinfo.chat
+              msgarea.appendChild(sendermsg)
+              
+            }
+            
+          })
+          setChatlength(changes[minChatuser].length);
+          setTestuser(minChatuser);
+                    
+        }
+        
+        else {
+          console.log("Same data")
+        }
+      }
+      catch (err) {
+        console.log(err)
+      }
+      
+    })
+  
+  
+    
+    
+    const createPeopleElement = (docid) => {
     const peoples = document.getElementById('peoples')
     let peopleDiv = document.createElement('div');
     peopleDiv.classList.add('people')
@@ -127,7 +181,7 @@ function Main() {
                     console.log(chatusers)
                     firestore.collection("users").doc(auth.currentUser.email).update({
                       chatusers: chatusers,
-                      [thisUser.substring(0,thisUser.indexOf('@'))]: []
+                      [thisUser.substring(0, thisUser.indexOf('@'))]: []
                     })
 
                     firestore.collection("users").doc(thisUser).get().then(e => {
@@ -136,7 +190,7 @@ function Main() {
 
                       firestore.collection("users").doc(thisUser).update({
                         chatusers: clientchatusers,
-                        [auth.currentUser.email.substring(0,auth.currentUser.email.indexOf('@'))]: []
+                        [auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))]: []
                       })
                     })
 
@@ -193,7 +247,7 @@ function Main() {
 
                 const chatUser = e.target.innerHTML
                 SetCurrentchatuser(chatUser);
-                const minChatuser = chatUser.substring(0,chatUser.indexOf("@"));
+                const minChatuser = chatUser.substring(0, chatUser.indexOf("@"));
 
                 const msgarea = document.getElementById("msgarea");
                 const meetname = document.getElementById("meetname")
@@ -202,7 +256,7 @@ function Main() {
 
                 firestore.collection("users").doc(auth.currentUser.email).get().then(snapshot => {
                   const currentchats = snapshot.data()[minChatuser]
-                  console.log(currentchats)
+                  // console.log(currentchats)
                 })
               }
 
@@ -292,6 +346,39 @@ function Main() {
                   container.appendChild(msg);
                   container.scrollTop = container.scrollHeight;
                   setMessage('');
+
+
+                  const me = auth.currentUser.email;
+                  const minMe = me.substring(0, me.indexOf("@"))
+
+                  const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
+                  firestore.collection("users").doc(me).get().then(
+                    snapshot => {
+                      let mychat = snapshot.data()[minChatuser]
+                      mychat.push({
+                        user: minMe,
+                        chat: message
+                      })
+                      firestore.collection("users").doc(me).update({
+                        [minChatuser]: mychat
+                      })
+
+
+                      firestore.collection("users").doc(currentchatuser).get().then(e => {
+                        let userchat = e.data()[minMe]
+                        userchat.push({
+                          user: minMe,
+                          chat: message
+
+                        })
+
+                        firestore.collection("users").doc(currentchatuser).update({
+                          [minMe]: userchat
+                        })
+
+                      })
+
+                    })
 
                 }}
               />
