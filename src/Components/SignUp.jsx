@@ -53,7 +53,9 @@ export default function SignUp() {
       name: auth.currentUser.displayName,
       uid: auth.currentUser.uid,
       email:auth.currentUser.email,
-      chatusers:[]
+      chatusers:[],
+      mycalls:{},
+      currentuser: ""
       
     })
   }
