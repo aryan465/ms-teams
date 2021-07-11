@@ -1,24 +1,28 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Syne+Mono&display=swap'); */
+*{
+  margin: 0;
+  padding: 0;
+}
 
-/* body {
-  font-family: 'Syne Mono', monospace;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin: 80px 10px;
-} */
+.vc{
+  background-color: #c5d9e0;
+  background-color: #284c58;
+  width: 100vw;
+  height: 100vh;
+}
 
 video {
-  width: 40vw;
-  height: 30vw;
+  width: 42vw;
+  height: 31.5vw;
   margin: 2rem;
   /* background: #2c3e50; */
-  background: #606163;
+  background: #0c0c0c;
+  border-radius: 10px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
 .videos {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* flex-direction: column; */
 }

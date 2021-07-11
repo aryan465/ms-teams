@@ -1,6 +1,9 @@
 import '../CSS/web.css';
 import { firestore } from '../config/fbConfig';
-import { useRef } from 'react';
+import { useRef} from 'react';
+import {video} from '../Logo/video.png';
+import {mic} from '../Logo/mic.png';
+import {endCall} from '../Logo/endcall.png';
 
 function Webcall() {
 
@@ -151,7 +154,7 @@ function Webcall() {
   };
 
   return (
-    <>
+    <div className = "vc" id = "vc">
       {/* <h2>1. Start your Webcam</h2> */}
       <div className="videos">
         <span>
@@ -197,7 +200,7 @@ function Webcall() {
       {/* <h2>4. Hangup</h2> */}
 
       <button id="hangupButton" ref={hangupButton} disabled>Hangup</button>
-    </>
+    </div>
   );
 }
 
