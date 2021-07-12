@@ -374,7 +374,8 @@ function Main() {
 
           <div id="msgarea" className="msgarea">
 
-            <div className="welcome">You are all set to go..</div>
+            <div className="welcome">You are all set to go..<br />
+              Open a chat stream to start chatting.</div>
 
           </div>
 
@@ -404,42 +405,45 @@ function Main() {
 
                   setMessage('');
                   console.log(message.trim())
+
+                  const me = auth.currentUser.email;
+                  const minMe = me.substring(0, me.indexOf("@"))
+
+                  const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
+
+                  if(minChatuser!==""){
                   if (message.trim() !== "") {
 
-
-
-                    const me = auth.currentUser.email;
-                    const minMe = me.substring(0, me.indexOf("@"))
-
-                    const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
-                    firestore.collection("users").doc(me).get().then(
-                      snapshot => {
-                        let mychat = snapshot.data()[minChatuser]
-                        mychat.push({
-                          user: minMe,
-                          chat: message
-                        })
-                        firestore.collection("users").doc(me).update({
-                          [minChatuser]: mychat
-                        })
-
-
-                        firestore.collection("users").doc(currentchatuser).get().then(e => {
-                          let userchat = e.data()[minMe]
-                          userchat.push({
+                    
+                      firestore.collection("users").doc(me).get().then(
+                        snapshot => {
+                          let mychat = snapshot.data()[minChatuser]
+                          mychat.push({
                             user: minMe,
                             chat: message
-
+                          })
+                          firestore.collection("users").doc(me).update({
+                            [minChatuser]: mychat
                           })
 
-                          firestore.collection("users").doc(currentchatuser).update({
-                            [minMe]: userchat
+
+                          firestore.collection("users").doc(currentchatuser).get().then(e => {
+                            let userchat = e.data()[minMe]
+                            userchat.push({
+                              user: minMe,
+                              chat: message
+
+                            })
+
+                            firestore.collection("users").doc(currentchatuser).update({
+                              [minMe]: userchat
+                            })
+
                           })
 
                         })
+                    }}
 
-                      })
-                  }
                 }}
               />
 
