@@ -16,6 +16,7 @@ function Webcall() {
   const [mystream, setMystream] = useState(null)
   const [cameraOn ,setCamaeraon] = useState(true)
   const [micOn ,setMicon] = useState(true)
+  const [callClicked, setCallclicked] = useState(false)
 
   let history = useHistory();
 
@@ -212,6 +213,7 @@ function Webcall() {
 
                 var usercallId = snapshot.data()["mycalls"][minCurrentuser];
 
+                if(!callClicked){
                 if (usercallId === "") {
                   webCam().then(() => {
                     callButtonClick(me, minMe, currentuser, minCurrentuser);
@@ -222,6 +224,9 @@ function Webcall() {
                   webCam().then(() => {
                     answerButtonClick(me, minCurrentuser);
                   })
+                }
+
+                setCallclicked(true)
                 }
 
               })
