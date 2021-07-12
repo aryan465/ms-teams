@@ -26,3 +26,55 @@ video {
   justify-content: center;
   /* flex-direction: column; */
 }
+
+#callButton{
+  background-color: rgb(3, 109, 23);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 30px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+  margin: 10px;
+  border: none;
+
+}
+
+#callButton img{
+  width: 25px;
+}
+
+#callButton:hover{
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  cursor: pointer;
+  width: 45.5px;
+  height: 45.5px;
+}
+
+#hangupButton{
+  background-color: rgb(212, 2, 55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 30px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+  margin: 10px;
+  border: none;
+
+}
+
+#hangupButton img{
+  width: 25px;
+}
+
+#hangupButton:hover{
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  cursor: pointer;
+  width: 45.5px;
+  height: 45.5px;
+}

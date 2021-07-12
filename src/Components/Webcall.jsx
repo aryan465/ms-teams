@@ -1,45 +1,37 @@
 import '../CSS/web.css';
-import { firestore } from '../config/fbConfig';
-import { useRef} from 'react';
-import {video} from '../Logo/video.png';
-import {mic} from '../Logo/mic.png';
-import {endCall} from '../Logo/endcall.png';
+import { auth, firestore } from '../config/fbConfig';
+import { useRef } from 'react';
+import video from '../Logo/video.png';
+import mic from '../Logo/mic.png';
+import endCall from '../Logo/endcall.png';
+import createCall from '../Logo/createcall.png';
+import { useState } from 'react';
 
 function Webcall() {
 
 
-  const webcamButton = useRef(null);
+  const[callId,setCallId] = useState("")
+
+
   const webcamVideo = useRef(null);
   const callButton = useRef(null);
-  const callInput = useRef(null);
-  const answerButton = useRef(null);
   const remoteVideo = useRef(null);
   const hangupButton = useRef(null);
 
   var localStream
   var remoteStream
-  
-  // var webcambtn;
-  // var webcamvdo;
-  // var callbtn;
-  // var callinpt;
-  // var answerbtn;
-  // var remotevdo;
-  // var hangupbtn;
 
 
-  //   useEffect(()=>{
-  //     webcambtn = webcamButton.current
-  //     webcamvdo = webcamVideo.current
-  //     callbtn = callButton.current
-  //     callinpt = callInput.current
-  //     answerbtn = answerButton.current
-  //     remotevdo = remoteVideo.current
-  //     hangupbtn = hangupButton.current
 
-  //   },[webcamButton,webcamVideo,callButton,callInput,answerButton,remoteVideo,hangupButton])
+      firestore.collection("users").doc(auth.currentUser.email).onSnapshot(
+      snapshot=>{
+        
+        const client = snapshot.data()["currentuser"]
+        const minClient = client.substring(0,client.indexOf("@"))
+        setCallId(snapshot.data()["mycalls"][minClient])
+      })
 
-  // console.log(webcambtn)
+
 
   const servers = {
     iceServers: [
@@ -69,19 +61,36 @@ function Webcall() {
     webcamVideo.current.srcObject = localStream;
     remoteVideo.current.srcObject = remoteStream;
 
-    callButton.current.disabled = false;
-    answerButton.current.disabled = false;
-    webcamButton.current.disabled = true;
   };
 
-  async function callButtonClick() {
+  async function callButtonClick(me, minMe, client, minClient) {
 
     const callDoc = firestore.collection('calls').doc();
     const offerCandidates = callDoc.collection('offerCandidates');
     const answerCandidates = callDoc.collection('answerCandidates');
 
 
-    callInput.current.value = callDoc.id;
+    firestore.collection("users").doc(me).get().
+      then(e => {
+
+        let mycalls = e.data()["mycalls"]
+        mycalls[minClient] = callDoc.id
+
+        firestore.collection("users").doc(me).update({
+          mycalls: mycalls
+
+        })
+        firestore.collection("users").doc(client).get().
+          then(snap => {
+
+            let clientcalls = snap.data()["mycalls"]
+            clientcalls[minMe] = callDoc.id
+
+            firestore.collection("users").doc(client).update({
+              mycalls: clientcalls
+            })
+          })
+      })
 
     pc.onicecandidate = (event) => {
       event.candidate && offerCandidates.add(event.candidate.toJSON());
@@ -118,88 +127,122 @@ function Webcall() {
     hangupButton.current.disabled = false;
   };
 
-  async function answerButtonClick(){
+  async function answerButtonClick(me,minClient) {
 
-    const callId = callInput.current.value;
-    const callDoc = firestore.collection('calls').doc(callId);
-    const answerCandidates = callDoc.collection('answerCandidates');
-    const offerCandidates = callDoc.collection('offerCandidates');
 
-    pc.onicecandidate = (event) => {
-      event.candidate && answerCandidates.add(event.candidate.toJSON());
-    };
-    const callData = (await callDoc.get()).data();
-
-  const offerDescription = callData.offer;
-  await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
-
-  const answerDescription = await pc.createAnswer();
-  await pc.setLocalDescription(answerDescription);
-
-  const answer = {
-    type: answerDescription.type,
-    sdp: answerDescription.sdp,
-  };
-  await callDoc.update({ answer });
-
-  offerCandidates.onSnapshot((snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      console.log(change);
-      if (change.type === 'added') {
-        let data = change.doc.data();
-        pc.addIceCandidate(new RTCIceCandidate(data));
-      }
-    });
-  });
+      
+      console.log(callId)
+      const callDoc = firestore.collection('calls').doc(callId);
+      const answerCandidates = callDoc.collection('answerCandidates');
+      const offerCandidates = callDoc.collection('offerCandidates');
+  
+      pc.onicecandidate = (event) => {
+        event.candidate && answerCandidates.add(event.candidate.toJSON());
+      };
+      const callData = (await callDoc.get()).data();
+      console.log(callData)
+      const offerDescription = callData.offer;
+      await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
+  
+      const answerDescription = await pc.createAnswer();
+      await pc.setLocalDescription(answerDescription);
+  
+      const answer = {
+        type: answerDescription.type,
+        sdp: answerDescription.sdp,
+      };
+      await callDoc.update({ answer });
+  
+      offerCandidates.onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          console.log(change);
+          if (change.type === 'added') {
+            let data = change.doc.data();
+            pc.addIceCandidate(new RTCIceCandidate(data));
+          }
+        });
+      });
   };
 
   return (
-    <div className = "vc" id = "vc">
-      {/* <h2>1. Start your Webcam</h2> */}
+    <div className="vc" id="vc">
       <div className="videos">
         <span>
-          {/* <h3>Local Stream</h3> */}
+
           <video id="webcamVideo" ref={webcamVideo} autoPlay playsInline></video>
         </span>
         <span>
-          {/* <h3>Remote Stream</h3> */}
           <video id="remoteVideo" ref={remoteVideo} autoPlay playsInline></video>
         </span>
       </div>
 
 
-      <button id="webcamButton" ref={webcamButton}
-        onClick={() => {
-          webCam();
-        }}
-      >Start webcam</button>
-
-      <h2>{/*2. Create a new Call*/}</h2>
-
       <button id="callButton" ref={callButton}
         onClick={() => {
           console.log('click');
-          callButtonClick();
+
+          const me = auth.currentUser.email;
+          const minMe = me.substring(0, me.indexOf("@"));
+
+          firestore.collection("users").doc(me).get().
+            then(snapshot => {
+              const currentuser = snapshot.data()["currentuser"]
+              const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
+
+              var usercallId = snapshot.data()["mycalls"][minCurrentuser];
+
+              if (usercallId === "") {
+                console.log(1)
+                webCam().then(()=>{
+                callButtonClick(me, minMe, currentuser, minCurrentuser);    
+                })
+              }
+
+              else {
+                console.log(2)
+                webCam().then(()=>{
+                  answerButtonClick(me,minCurrentuser);
+                })
+              }
+
+            })
         }}
-      >Create Call (offer)</button>
+      ><img src={createCall} alt="" /></button>
 
-      {/* <h2>3. Join a Call</h2> */}
-      {/* <p>Answer the call from a different browser window or device</p> */}
-      <p>
-        Type the offer id to answer the call.
-      </p>
 
-      <input id="callInput" ref={callInput} />
-      <button id="answerButton" ref={answerButton} 
-      onClick = {()=>{
-        answerButtonClick()
-        console.log(32154)
-      }}
-      >Answer</button>
+      <button id="hangupButton" ref={hangupButton}
+        onClick={() => {
+          const me = auth.currentUser.email;
+          const minMe = me.substring(0, me.indexOf("@"));
 
-      {/* <h2>4. Hangup</h2> */}
+          firestore.collection("users").doc(me).get().
+            then(snapshot => {
+              const currentuser = snapshot.data()["currentuser"]
+              const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
 
-      <button id="hangupButton" ref={hangupButton} disabled>Hangup</button>
+              let mycalls = snapshot.data()["mycalls"]
+              mycalls[minCurrentuser] = ""
+
+              firestore.collection("users").doc(me).update({
+                mycalls: mycalls
+              })
+
+              firestore.collection("users").doc(currentuser).get().
+                then(snap => {
+
+                  let clientcalls = snap.data()["mycalls"]
+                  clientcalls[minMe] = ""
+
+                  firestore.collection("users").doc(currentuser).update({
+                    mycalls: clientcalls
+                  })
+                })
+
+                console.log("empty")
+            })
+        }}
+      >
+        <img src={endCall} alt="" /></button>
     </div>
   );
 }
