@@ -6,11 +6,10 @@ import chatlogo from '../Logo/chatlogo.png';
 import search from '../Logo/search.png';
 import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
-import attach from '../Logo/attach.png';
+import attach from '../Logo/smiling.png';
 import vclogo from '../Logo/vclogo.png';
 import logout from '../Logo/logout.png';
 import { auth, firestore } from '../config/fbConfig';
-
 
 
 function Main() {
@@ -235,7 +234,7 @@ function Main() {
               peoples.style.display = "none"
             }}
           >
-            {/* div with class people */}
+            {/* div with class "people" */}
 
           </div>
         </div>
@@ -267,10 +266,7 @@ function Main() {
         <div className="middle">
           <div className="mhead">
             <h3>Chat</h3>
-            <div className="logos">
-              <img src={search} alt=""
-              />
-            </div>
+
           </div>
 
           <div className="meets" id="meets"
@@ -349,12 +345,6 @@ function Main() {
             }}
           >
 
-            {/* Syntax of the meet element in middle segment */}
-            {/* <div className="meet" id="meet">
-              <img src={schedule} alt="" />
-              <span>Meeting with Lorem Ipsum</span>
-            </div> */}
-
           </div>
         </div>
 
@@ -399,7 +389,7 @@ function Main() {
 
             <div className="ficons">
               <div className="attach">
-                <img src={attach} alt="" />
+                {/* <img src={attach} alt="" /> */}
               </div>
 
               <img id="send" className="send" src={send} alt=""
