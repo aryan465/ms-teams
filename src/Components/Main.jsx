@@ -8,6 +8,7 @@ import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
 import attach from '../Logo/attach.png';
 import vclogo from '../Logo/vclogo.png';
+import logout from '../Logo/logout.png';
 import { auth, firestore } from '../config/fbConfig';
 
 
@@ -241,7 +242,7 @@ function Main() {
 
 
         <div className="avatar">{auth.currentUser.displayName.slice(0, 1)}</div>
-        <button
+        <button id = "logout"
           onClick={(e) => {
             e.preventDefault();
             auth.signOut().then(() => {
@@ -250,7 +251,9 @@ function Main() {
               history.push('/');
             })
           }}
-        >LogOut</button>
+        >
+        <img src={logout} alt="" />
+        </button>
 
       </header>
 
