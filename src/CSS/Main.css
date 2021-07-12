@@ -240,46 +240,21 @@ header .avatar{
     font-size: 18px;
 }
 
-/* files after meettitle */
-.files{
-    margin-left:15px;
-    /* display: none; */
-}
-.files ul{
-    display: flex;
-    flex-direction: row;
-    list-style: none;
-    font-size: 13px;
-    font-weight: 500;
-    
-}
 
-ul li{
 
-    padding: 10px;
-    margin-right: 4px;
-    color: rgba(63, 62, 62, 0.849);
-}
-
-li:hover{
-    background-color: rgb(235, 216, 253);
-    color: black;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-}
 .rheadlogos{
     margin: 0 4vw 0 auto;
 }
 
-.rheadlogos img{
+.rheadlogos #vclogo{
     width: 35px;
     margin: auto;
+    display: none;
 }
 
-.rheadlogos img:hover{
+.rheadlogos #vclogo:hover{
     cursor: pointer;
-    width: 38px;
+    width: 36.5px;
 
 }
 
@@ -294,25 +269,41 @@ li:hover{
     padding-right: 4px;
 }
 
+.welcome{
+    font-size: 35px;
+    margin: auto;
+    color: rgb(104, 104, 104);
+    
+}
+
 .msgarea .mymsg{
     display: flex;
+    flex-direction: column;
     width: fit-content;
     height: fit-content;
     border-radius: 5px;
     padding: 8px 14px;
     margin: 2px 6vw 2px auto;
-    background-color: rgb(182, 210, 230);
+    background-color: rgb(162, 196, 221);
     font-size: 14px;
+}
+
+.user{
+    font-size: 11px;
+    font-weight: 500;
+    color: rgb(48, 47, 47);
+    margin-bottom: 5px;
 }
 
 .msgarea .sendermsg{
     display: flex;
+    flex-direction: column;
     width: fit-content;
     height: fit-content;
     border-radius: 5px;
     padding: 8px 14px;
     margin: 2px auto 2px 6vw;
-    background-color: rgb(168, 238, 223);
+    background-color: rgb(113, 219, 196);
     font-size: 14px;
 }
 

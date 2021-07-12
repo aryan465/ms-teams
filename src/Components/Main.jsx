@@ -63,15 +63,40 @@ function Main() {
           if (chatinfo.user === minMe) {
             let mymsg = document.createElement("div")
             mymsg.classList.add("mymsg")
-            mymsg.innerHTML = chatinfo.chat
+
+            let user = document.createElement("div")
+            user.classList.add("user");
+            user.innerHTML = "you"
+
+            let msg = document.createElement("div")
+            msg.classList.add("msg");
+            msg.innerHTML = chatinfo.chat
+
+            mymsg.appendChild(user)
+            mymsg.appendChild(msg)
+
             msgarea.appendChild(mymsg)
+            msgarea.scrollTop = msgarea.scrollHeight
           }
 
           else {
             let sendermsg = document.createElement("div")
             sendermsg.classList.add("sendermsg")
-            sendermsg.innerHTML = chatinfo.chat
+
+            let user = document.createElement("div")
+            user.classList.add("user");
+            user.innerHTML = chatinfo.user
+
+            let msg = document.createElement("div")
+            msg.classList.add("msg");
+            msg.innerHTML = chatinfo.chat
+
+            sendermsg.appendChild(user)
+            sendermsg.appendChild(msg)
+
             msgarea.appendChild(sendermsg)
+            msgarea.scrollTop = msgarea.scrollHeight
+
 
           }
 
@@ -190,12 +215,12 @@ function Main() {
                       const clientchatusers = e.data()["chatusers"]
                       const clientcalls = e.data()["mycalls"]
                       clientchatusers.push((auth.currentUser.email));
-                      clientcalls[auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))] =  "";
+                      clientcalls[auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))] = "";
 
                       firestore.collection("users").doc(thisUser).update({
                         chatusers: clientchatusers,
                         [auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))]: [],
-                        mycalls : clientcalls
+                        mycalls: clientcalls
                       })
                     })
 
@@ -254,15 +279,61 @@ function Main() {
                 SetCurrentchatuser(chatUser);
 
                 const minChatuser = chatUser.substring(0, chatUser.indexOf("@"));
-
+                const me = auth.currentUser.email
+                const minMe = me.substring(0, me.indexOf("@"));
                 const msgarea = document.getElementById("msgarea");
                 const meetname = document.getElementById("meetname")
                 meetname.innerHTML = `Meeting with ${minChatuser}`;
                 msgarea.innerHTML = "";
 
-                // firestore.collection("users").doc(auth.currentUser.email).get().then(snapshot => {
-                //   const currentchats = snapshot.data()[minChatuser]
-                // })
+                document.getElementById("vclogo").style.display = "block";
+
+                firestore.collection("users").doc(auth.currentUser.email).get().then(snapshot => {
+                  const currentchats = snapshot.data()[minChatuser]
+
+                  currentchats.forEach(chatinfo => {
+                    if (chatinfo.user === minMe) {
+                      let mymsg = document.createElement("div")
+                      mymsg.classList.add("mymsg")
+
+                      let user = document.createElement("div")
+                      user.classList.add("user");
+                      user.innerHTML = "you"
+
+                      let msg = document.createElement("div")
+                      msg.classList.add("msg");
+                      msg.innerHTML = chatinfo.chat
+
+                      mymsg.appendChild(user)
+                      mymsg.appendChild(msg)
+
+                      msgarea.appendChild(mymsg)
+                      msgarea.scrollTop = msgarea.scrollHeight
+
+                    }
+
+                    else {
+                      let sendermsg = document.createElement("div")
+                      sendermsg.classList.add("sendermsg")
+
+                      let user = document.createElement("div")
+                      user.classList.add("user");
+                      user.innerHTML = chatinfo.user
+
+                      let msg = document.createElement("div")
+                      msg.classList.add("msg");
+                      msg.innerHTML = chatinfo.chat
+
+                      sendermsg.appendChild(user)
+                      sendermsg.appendChild(msg)
+
+                      msgarea.appendChild(sendermsg)
+                      msgarea.scrollTop = msgarea.scrollHeight
+
+
+                    }
+                  })
+                })
 
                 firestore.collection("users").doc(auth.currentUser.email).update({
                   currentuser: e.target.innerHTML
@@ -290,39 +361,21 @@ function Main() {
           <div className="rhead">
             <div className="meettitle">
               <img src={schedule} alt="" />
-              <h3 className="meetname" id="meetname">Meeting with Lorem Ipsum</h3>
+              <h3 className="meetname" id="meetname">Create Your Meetings</h3>
             </div>
 
-            {/* <div className="files">
-              <ul>
-                <li>Chat</li>
-                <li>Files</li>
-              </ul>
-            </div> */}
 
             <div className="rheadlogos">
-              <Link to='/chat/vc'><img src={vclogo} alt=""
+              <Link to='/chat/vc'><img id="vclogo" src={vclogo} alt=""
 
               /></Link>
             </div>
           </div>
 
           <div id="msgarea" className="msgarea">
-            <div className="mymsg">
-              Hi! How are you
-            </div>
-            <div className="sendermsg">
-              hello!!
-            </div>
-            <div className="mymsg">
-              Hi! How are you
-            </div>
-            <div className="sendermsg">
-              hello!!
-            </div>
-            <div className="mymsg">
-              Hi! How are you
-            </div>
+
+            <div className="welcome">You are all set to go..</div>
+
           </div>
 
           <div className="rfoot">
@@ -348,47 +401,45 @@ function Main() {
               <img id="send" className="send" src={send} alt=""
                 onClick={() => {
 
-                  var container = document.getElementById('msgarea');
-                  var msg = document.createElement("div");
-                  msg.classList.add('mymsg');
-                  msg.innerHTML = message;
-                  container.appendChild(msg);
-                  container.scrollTop = container.scrollHeight;
+
                   setMessage('');
+                  console.log(message.trim())
+                  if (message.trim() !== "") {
 
 
-                  const me = auth.currentUser.email;
-                  const minMe = me.substring(0, me.indexOf("@"))
 
-                  const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
-                  firestore.collection("users").doc(me).get().then(
-                    snapshot => {
-                      let mychat = snapshot.data()[minChatuser]
-                      mychat.push({
-                        user: minMe,
-                        chat: message
-                      })
-                      firestore.collection("users").doc(me).update({
-                        [minChatuser]: mychat
-                      })
+                    const me = auth.currentUser.email;
+                    const minMe = me.substring(0, me.indexOf("@"))
 
-
-                      firestore.collection("users").doc(currentchatuser).get().then(e => {
-                        let userchat = e.data()[minMe]
-                        userchat.push({
+                    const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
+                    firestore.collection("users").doc(me).get().then(
+                      snapshot => {
+                        let mychat = snapshot.data()[minChatuser]
+                        mychat.push({
                           user: minMe,
                           chat: message
-
+                        })
+                        firestore.collection("users").doc(me).update({
+                          [minChatuser]: mychat
                         })
 
-                        firestore.collection("users").doc(currentchatuser).update({
-                          [minMe]: userchat
+
+                        firestore.collection("users").doc(currentchatuser).get().then(e => {
+                          let userchat = e.data()[minMe]
+                          userchat.push({
+                            user: minMe,
+                            chat: message
+
+                          })
+
+                          firestore.collection("users").doc(currentchatuser).update({
+                            [minMe]: userchat
+                          })
+
                         })
 
                       })
-
-                    })
-
+                  }
                 }}
               />
 
