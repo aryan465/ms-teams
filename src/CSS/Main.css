@@ -308,6 +308,8 @@ header .avatar{
     display: flex;
     flex-direction: column;
     width: fit-content;
+    max-width: 20vw;
+    overflow-wrap: break-word;
     height: fit-content;
     border-radius: 5px;
     padding: 8px 14px;
@@ -327,6 +329,8 @@ header .avatar{
     display: flex;
     flex-direction: column;
     width: fit-content;
+    max-width: 20vw;
+    overflow-wrap: break-word;
     height: fit-content;
     border-radius: 5px;
     padding: 8px 14px;

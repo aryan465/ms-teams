@@ -3,10 +3,8 @@ import { Link, useHistory, Redirect } from 'react-router-dom';
 import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
 import chatlogo from '../Logo/chatlogo.png';
-import search from '../Logo/search.png';
 import schedule from '../Logo/schedule.png';
 import send from '../Logo/send.png';
-import attach from '../Logo/smiling.png';
 import vclogo from '../Logo/vclogo.png';
 import logout from '../Logo/logout.png';
 import { auth, firestore } from '../config/fbConfig';
@@ -106,12 +104,10 @@ function Main() {
 
       }
 
-      else {
-        console.log("Same data")
-      }
+
     }
     catch (err) {
-      console.log(err)
+
     }
 
   })
@@ -187,7 +183,6 @@ function Main() {
             onClick={(e) => {
 
 
-              console.log(e.target.innerHTML)
               const thisUser = e.target.innerHTML;
 
               firestore.collection("users").doc(auth.currentUser.email).get()
@@ -241,17 +236,17 @@ function Main() {
 
 
         <div className="avatar">{auth.currentUser.displayName.slice(0, 1)}</div>
-        <button id = "logout"
+        <button id="logout"
           onClick={(e) => {
             e.preventDefault();
             auth.signOut().then(() => {
 
-              console.log('user out')
+              console.log('Signed Out')
               history.push('/');
             })
           }}
         >
-        <img src={logout} alt="" />
+          <img src={logout} alt="" />
         </button>
 
       </header>
@@ -339,9 +334,7 @@ function Main() {
                 })
               }
 
-              else {
-                console.log(e.target)
-              }
+
             }}
           >
 
@@ -389,7 +382,6 @@ function Main() {
 
             <div className="ficons">
               <div className="attach">
-                {/* <img src={attach} alt="" /> */}
               </div>
 
               <img id="send" className="send" src={send} alt=""
@@ -397,17 +389,16 @@ function Main() {
 
 
                   setMessage('');
-                  console.log(message.trim())
 
                   const me = auth.currentUser.email;
                   const minMe = me.substring(0, me.indexOf("@"))
 
                   const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
 
-                  if(minChatuser!==""){
-                  if (message.trim() !== "") {
+                  if (minChatuser !== "") {
+                    if (message.trim() !== "") {
 
-                    
+
                       firestore.collection("users").doc(me).get().then(
                         snapshot => {
                           let mychat = snapshot.data()[minChatuser]
@@ -435,7 +426,8 @@ function Main() {
                           })
 
                         })
-                    }}
+                    }
+                  }
 
                 }}
               />
