@@ -429,6 +429,9 @@ function Main() {
                     }
                   }
 
+                  else{
+                    alert("Open a chat stream.")
+                  }
                 }}
               />
 
