@@ -164,7 +164,6 @@ function Webcall() {
 
     offerCandidates.onSnapshot((snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        // console.log(change);
         if (change.type === 'added') {
           let data = change.doc.data();
           pc.addIceCandidate(new RTCIceCandidate(data));
@@ -247,7 +246,6 @@ function Webcall() {
               }
             }
             catch (err) {
-              console.log(err)
             }
           }}>
           <img src={video} alt="" />
@@ -267,7 +265,6 @@ function Webcall() {
               }
             }
             catch (err) {
-              console.log(err)
             }
           }}>
           <img src={microphone} alt="" />
@@ -301,20 +298,18 @@ function Webcall() {
                     })
                   })
 
-                console.log("empty")
 
               })
 
             try {
 
               mystream.getTracks().forEach(function (track) {
-                if (track.readyState == 'live') {
+                if (track.readyState === 'live') {
                   track.stop();
                   
                 }})
             }
             catch (err) {
-              console.log(err)
             }
             history.push("/chat")
           }}
