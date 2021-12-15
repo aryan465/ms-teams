@@ -11,10 +11,17 @@
   display: flex;
   justify-content: center;
 }
+.videos {
+  display: flex;
+  justify-content: center;
+  /* flex-wrap: wrap; */
+}
 
 video {
   width: 42vw;
   height: 31.5vw;
+  /* min-width: fit-content;
+  min-height: fit-content; */
   margin: 2rem;
   background: #0c0c0c;
   border-radius: 10px;
@@ -22,10 +29,6 @@ video {
   transform: rotateY(180deg);
 }
 
-.videos {
-  display: flex;
-  justify-content: center;
-}
 
 .buttons{
   display: flex;

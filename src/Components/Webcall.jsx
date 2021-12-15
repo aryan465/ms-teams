@@ -83,8 +83,7 @@ function Webcall() {
     const answerCandidates = callDoc.collection('answerCandidates');
 
 
-    firestore.collection("users").doc(me).get().
-      then(e => {
+    firestore.collection("users").doc(me).get().then(e => {
 
         let mycalls = e.data()["mycalls"]
         mycalls[minClient] = callDoc.id
@@ -93,8 +92,7 @@ function Webcall() {
           mycalls: mycalls
 
         })
-        firestore.collection("users").doc(client).get().
-          then(snap => {
+        firestore.collection("users").doc(client).get().then(snap => {
 
             let clientcalls = snap.data()["mycalls"]
             clientcalls[minMe] = callDoc.id
@@ -205,8 +203,7 @@ function Webcall() {
             const me = auth.currentUser.email;
             const minMe = me.substring(0, me.indexOf("@"));
 
-            firestore.collection("users").doc(me).get().
-              then(snapshot => {
+            firestore.collection("users").doc(me).get().then(snapshot => {
                 const currentuser = snapshot.data()["currentuser"]
                 const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
 
@@ -275,8 +272,7 @@ function Webcall() {
             const me = auth.currentUser.email;
             const minMe = me.substring(0, me.indexOf("@"));
 
-            firestore.collection("users").doc(me).get().
-              then(snapshot => {
+            firestore.collection("users").doc(me).get().then(snapshot => {
                 const currentuser = snapshot.data()["currentuser"]
                 const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
 
@@ -287,8 +283,7 @@ function Webcall() {
                   mycalls: mycalls
                 })
 
-                firestore.collection("users").doc(currentuser).get().
-                  then(snap => {
+                firestore.collection("users").doc(currentuser).get().then(snap => {
 
                     let clientcalls = snap.data()["mycalls"]
                     clientcalls[minMe] = ""

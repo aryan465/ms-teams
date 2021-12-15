@@ -1,6 +1,6 @@
 import React from 'react';
 import '../CSS/Start.css';
-import { useState} from 'react';
+import { useState } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -15,7 +15,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { Link } from 'react-router-dom';
 import { auth } from '../config/fbConfig';
-
+import titlelogo from '../Logo/video-call (1).png';
 import { useHistory } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.secondary.main,
   },
   form: {
-    width: '100%', 
+    width: '100%',
     marginTop: theme.spacing(1),
   },
   submit: {
@@ -51,98 +51,109 @@ export default function SignIn() {
   const handleSignin = (e, email, password) => {
     e.preventDefault();
     try {
-      auth.signInWithEmailAndPassword(email, password).then(()=>{
-        
+      auth.signInWithEmailAndPassword(email, password).then(() => {
+
         history.push('/chat')
+        setEmail('');
+        setPassword('');
+
       });
 
     } catch (error) {
       alert(error);
+
     }
-
-    setEmail('');
-    setPassword('');
-
+    // setEmail('');
+    // setPassword('');
   };
 
   let history = useHistory();
   const classes = useStyles();
   return (
-    <div className="home">
-    <div className="components">
-    <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      <div className={classes.paper}>
-        <Avatar className={classes.avatar}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Sign In
-        </Typography>
-        <form className={classes.form} noValidate>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-            }}
+    <>
+      <div className="start">
+        <Link to='/'>
+          <img src={titlelogo} alt=""/>
+          </Link>
+        <div className="name">Microsoft Teams</div>
 
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
-          />
-          <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classes.submit}
-            onClick={(e) => {
-              handleSignin(e, email, password);
-              
-              }}
-          >
-            Sign In
-          </Button>
-          <Grid container>
-
-            <Grid item>
-              <Link to="/signup" style={LinkStyle}>
-                {"Don't have an account? Sign Up"}
-              </Link>
-            </Grid>
-          </Grid>
-        </form>
       </div>
-      <Box mt={5}>
+      <div className="home">
+        <div className="components">
+          <Container component="main" maxWidth="xs">
+            <CssBaseline />
+            <div className={classes.paper}>
+              <Avatar className={classes.avatar}>
+                <LockOutlinedIcon />
+              </Avatar>
+              <Typography component="h1" variant="h5">
+                Sign In
+              </Typography>
+              <form className={classes.form} noValidate>
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email Address"
+                  name="email"
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
 
-      </Box>
-    </Container>
-    </div>
-    </div>
+                />
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                  }}
+                />
+                <FormControlLabel
+                  control={<Checkbox value="remember" color="primary" />}
+                  label="Remember me"
+                />
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  className={classes.submit}
+                  onClick={(e) => {
+                    handleSignin(e, email, password);
+
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Grid container>
+
+                  <Grid item>
+                    <Link to="/signup" style={LinkStyle}>
+                      {"Don't have an account? Sign Up"}
+                    </Link>
+                  </Grid>
+                </Grid>
+              </form>
+            </div>
+            <Box mt={5}>
+
+            </Box>
+          </Container>
+        </div>
+      </div>
+    </>
   );
 }
