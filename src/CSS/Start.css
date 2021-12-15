@@ -6,25 +6,27 @@
 }
 
 div .start{
-    /* background-color: rgb(100, 50, 146); */
-    background-color: #2ebdc7 ;
+
+    background-color: #019694 ;
+    background-color: #22577E ;
+    box-shadow: 0px 0px 8px 0px rgb(25, 25, 26);
+    position: relative;
     color: white;
     display: flex;
     align-items: center;
-    /* justify-content: center; */
     flex-direction: row;
     height: 48px;
 }
 
 div .start div{
-    margin-left: 5px;
+    margin-left: 8px;
     font-size: 17px;
     font-weight: 500;
 }
 
 div .start img{
     width: 30px;
-    margin-left: 10px;
+    margin-left: 18px;
 }
 
 div .start input{
@@ -44,19 +46,24 @@ div .start input{
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    height: 92vh;
+    height: 93.5vh;
+    width: 100vw;
+    max-width: 100%;
+    background: linear-gradient(20deg,#68b8ed 30%,rgb(170, 235, 255));
+    /* background-color: #b0fffc;  */
 }
 
 .components{
     margin: auto;
-    /* height: 50vh; */
+    background: #deedf5;
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    border-radius: 10px;
 
 }
 
 .getstarted{
     height: 500px;
-    width: 400px;
+    width: 380px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -77,17 +84,11 @@ div .start input{
 }
 
 .btntxt{
-    font-size: 18px;
+    font-size: 15px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
     margin-bottom: 70px;
-    text-decoration: none;
-    color: blue;
+    color: rgb(10, 10, 10);
     
-}
-
- .MuiButton-containedPrimary{
-    color: #2ebdc7;
-    text-decoration: none;
-    border: none;
 }
 
 
@@ -101,7 +102,7 @@ div .start input{
 
 
 .home .homeimage img{
-    width: 40vw;
+    width: 38vw;
     max-width: 750px;
-    min-width: 35vw;
+    min-width: 30vw;
 }

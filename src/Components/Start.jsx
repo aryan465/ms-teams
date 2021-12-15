@@ -1,6 +1,7 @@
 import '../CSS/Start.css';
 import titlelogo from '../Logo/video-call (1).png';
-import vc from '../Logo/vcl.jpg';
+import bg from '../Logo/sbg.png';
+// import startlogo from '../Logo/Young.jpg';
 import Container from '@material-ui/core/Container';
 import Button from '@material-ui/core/Button';
 import { Link } from 'react-router-dom';
@@ -11,9 +12,10 @@ function Start() {
     return (
         <>
             <div className="start">
-                <img src={titlelogo} alt="" />
+                <Link to='/'>
+                    <img src={titlelogo} alt=""/>
+                </Link>
                 <div className="name">Microsoft Teams</div>
-
             </div>
             <div className="home">
                 <div className="components">
@@ -21,20 +23,24 @@ function Start() {
                     <Container component="main" maxWidth="xs">
                         <div className="getstarted">
                             <div className="new">
-                                <span className="btntxt">New To Teams..?</span>
-                                <Link to="/signup">
+                                <span className="btntxt">New User?</span>
+                                <Link 
+                                    to="/signup"
+                                    style={{textDecoration:"none"}}
+                                >
                                     <Button
-                                        type="submit"
                                         fullWidth
                                         variant="contained"
                                         color="secondary">Sign Up</Button>
                                 </Link>
                             </div>
                             <div className="sg">
-                                <span className="btntxt">Already have an account...</span>
-                                <Link to="signin">
+                                <span className="btntxt">Already have an account?</span>
+                                <Link 
+                                    to="signin"
+                                    style={{textDecoration:"none"}}
+                                    >
                                     <Button
-                                        type="submit"
                                         fullWidth
                                         variant="contained"
                                         color="primary">Sign In</Button>
@@ -47,7 +53,7 @@ function Start() {
 
 
                 <div className="homeimage">
-                    <img src={vc} alt="" />
+                    <img src={bg} alt="" />
                 </div>
 
             </div>
