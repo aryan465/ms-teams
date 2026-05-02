@@ -1,207 +1,155 @@
-import React from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-import Grid from '@material-ui/core/Grid';
-import Box from '@material-ui/core/Box';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-import { Link, useHistory } from 'react-router-dom';
+import React, { useState } from 'react';
+import '../CSS/Start.css';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, firestore } from '../config/fbConfig';
 import titlelogo from '../Logo/video-call (1).png';
-import { useState } from 'react';
-
-
-const useStyles = makeStyles((theme) => ({
-  paper: {
-    marginTop: theme.spacing(8),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  avatar: {
-    margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
-  },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(3),
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
-  },
-}));
-
-const LinkStyle = {
-  textDecoration: 'none',
-  color: '#185ADB'
-}
 
 export default function SignUp() {
   const [fname, setFname] = useState('');
   const [lname, setLname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  let history = useHistory();
-
-  const makeuserdocs = () => {
-    const users = firestore.collection('users');
-    users.doc(auth.currentUser.email).set({
-      name: auth.currentUser.displayName,
-      uid: auth.currentUser.uid,
-      email: auth.currentUser.email,
+  const makeUserDoc = async (user) => {
+    await setDoc(doc(firestore, 'users', user.email), {
+      name: user.displayName,
+      uid: user.uid,
+      email: user.email,
       chatusers: [],
       mycalls: {},
-      currentuser: ""
-
-    })
-  }
-
-  const handleSignup = (e, email, password) => {
-    e.preventDefault();
-
-    try {
-      auth.createUserWithEmailAndPassword(email, password).then(() => {
-        var user = auth.currentUser;
-        user.updateProfile({
-          displayName: fname + ' ' + lname,
-        }).then(() => {
-
-          makeuserdocs()
-          history.push('/signin')
-        })
-      })
-
-    } catch (error) {
-      alert(error);
-    }
-
-    setFname('');
-    setLname('');
-    setEmail('');
-    setPassword('');
+      currentuser: '',
+    });
   };
 
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(user, { displayName: `${fname} ${lname}` });
+      await makeUserDoc({ ...user, displayName: `${fname} ${lname}` });
+      navigate('/signin');
+    } catch (err) {
+      setError(err.message.replace('Firebase: ', '').replace(/ \(.*\)/, ''));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const classes = useStyles();
   return (
-    <>
-      <div className="start">
-        <Link to='/'>
-          <img src={titlelogo} alt=""/>
-          </Link>
-        <div className="name">Microsoft Teams</div>
+    <div className="auth-page">
+      <header className="start-header">
+        <Link to='/' className="start-brand">
+          <img src={titlelogo} alt="Microsoft Teams" className="start-logo" />
+          <span className="start-brand-name">Microsoft Teams</span>
+        </Link>
+      </header>
 
-      </div>
-      <div className="home">
-        <div className="components">
-          <Container component="main" maxWidth="xs">
-            <CssBaseline />
-            <div className={classes.paper}>
-              <Avatar className={classes.avatar}>
-                <LockOutlinedIcon />
-              </Avatar>
-              <Typography component="h1" variant="h5">
-                Sign up
-              </Typography>
-              <form className={classes.form} noValidate>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      autoComplete="fname"
-                      name="firstName"
-                      variant="outlined"
-                      required
-                      fullWidth
-                      id="firstName"
-                      label="First Name"
-                      autoFocus
-                      value={fname}
-                      onChange={(e) => {
-                        setFname(e.target.value);
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      variant="outlined"
-                      required
-                      fullWidth
-                      id="lastName"
-                      label="Last Name"
-                      name="lastName"
-                      autoComplete="lname"
-                      value={lname}
-                      onChange={(e) => {
-                        setLname(e.target.value);
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      variant="outlined"
-                      required
-                      fullWidth
-                      id="email"
-                      label="Email Address"
-                      name="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      variant="outlined"
-                      required
-                      fullWidth
-                      name="password"
-                      label="Password"
-                      type="password"
-                      id="password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                      }}
-                    />
-                  </Grid>
+      <main className="auth-main">
+        <Container maxWidth="xs">
+          <Box className="auth-card">
+            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
+              <LockOutlinedIcon />
+            </Avatar>
+            <Typography component="h1" variant="h5" fontWeight={600} gutterBottom>
+              Create account
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Join Teams and start collaborating today.
+            </Typography>
 
+            {error && (
+              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSignup} sx={{ width: '100%' }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="First Name"
+                    name="firstName"
+                    autoComplete="given-name"
+                    autoFocus
+                    value={fname}
+                    onChange={(e) => setFname(e.target.value)}
+                  />
                 </Grid>
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  className={classes.submit}
-                  onClick={(e) => {
-                    handleSignup(e, email, password);
-                  }}
-                >
-                  Sign Up
-                </Button>
-                <Grid container justify="flex-end">
-                  <Grid item>
-                    <Link to="/signin"
-                      style={LinkStyle}>
-                      Already have an account? Sign in
-                    </Link>
-                  </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Last Name"
+                    name="lastName"
+                    autoComplete="family-name"
+                    value={lname}
+                    onChange={(e) => setLname(e.target.value)}
+                  />
                 </Grid>
-              </form>
-            </div>
-            <Box mt={5}>
-
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    name="password"
+                    label="Password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ mt: 3, mb: 2, py: 1.5 }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
+              </Button>
+              <Grid container justifyContent="center">
+                <Grid item>
+                  <Link to="/signin" className="auth-link">
+                    Already have an account? Sign in
+                  </Link>
+                </Grid>
+              </Grid>
             </Box>
-          </Container>
-        </div>
-      </div>
-    </>
+          </Box>
+        </Container>
+      </main>
+    </div>
   );
 }
