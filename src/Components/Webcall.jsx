@@ -1,315 +1,441 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import '../CSS/web.css';
 import { auth, firestore } from '../config/fbConfig';
-import { useRef } from 'react';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  setDoc,
+  onSnapshot,
+} from 'firebase/firestore';
+import { Navigate, useNavigate } from 'react-router-dom';
+import Tooltip from '@mui/material/Tooltip';
 import video from '../Logo/video.png';
 import microphone from '../Logo/mic.png';
 import endCall from '../Logo/endcall.png';
 import createCall from '../Logo/createcall.png';
-import { useState } from 'react';
-import { Redirect, useHistory } from 'react-router-dom';
 
+// Google STUN servers + fallback
+const SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
+// Call status enum
+const STATUS = {
+  IDLE: 'idle',
+  REQUESTING_MEDIA: 'requesting_media',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  RECONNECTING: 'reconnecting',
+  ENDED: 'ended',
+  ERROR: 'error',
+};
+
+const STATUS_LABELS = {
+  [STATUS.IDLE]: 'Ready to call',
+  [STATUS.REQUESTING_MEDIA]: 'Starting camera & mic…',
+  [STATUS.CONNECTING]: 'Connecting…',
+  [STATUS.CONNECTED]: 'Connected',
+  [STATUS.RECONNECTING]: 'Reconnecting…',
+  [STATUS.ENDED]: 'Call ended',
+  [STATUS.ERROR]: 'Connection failed',
+};
 
 function Webcall() {
+  const [myStream, setMyStream] = useState(null);
+  const [cameraOn, setCameraOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [callStarted, setCallStarted] = useState(false);
+  const [callStatus, setCallStatus] = useState(STATUS.IDLE);
+  const [callPartner, setCallPartner] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [remoteActive, setRemoteActive] = useState(false);
 
+  const navigate = useNavigate();
+  const webcamRef = useRef(null);
+  const remoteRef = useRef(null);
+  const pcRef = useRef(null);
+  // Track Firestore unsubscribers so we can clean them up
+  const unsubCallRef = useRef(null);
+  const unsubAnswerRef = useRef(null);
+  const unsubOfferRef = useRef(null);
 
-  const [callId, setCallId] = useState("")
-  const [mystream, setMystream] = useState(null)
-  const [cameraOn ,setCamaeraon] = useState(true)
-  const [micOn ,setMicon] = useState(true)
-  const [callClicked, setCallclicked] = useState(false)
+  const currentUser = auth.currentUser;
 
-  let history = useHistory();
+  // ── Helpers ──────────────────────────────────────────────
+  const minOf = (email) => email.substring(0, email.indexOf('@'));
 
-  const webcamVideo = useRef(null);
-  const callButton = useRef(null);
-  const remoteVideo = useRef(null);
-  const hangupButton = useRef(null);
+  const cleanupPC = useCallback(() => {
+    if (unsubCallRef.current)   { unsubCallRef.current();   unsubCallRef.current = null; }
+    if (unsubAnswerRef.current) { unsubAnswerRef.current(); unsubAnswerRef.current = null; }
+    if (unsubOfferRef.current)  { unsubOfferRef.current();  unsubOfferRef.current = null; }
+    if (pcRef.current) {
+      pcRef.current.ontrack = null;
+      pcRef.current.onicecandidate = null;
+      pcRef.current.onconnectionstatechange = null;
+      pcRef.current.oniceconnectionstatechange = null;
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+  }, []);
 
-  var localStream
-  var remoteStream
+  const stopMedia = useCallback((stream) => {
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+  }, []);
 
-  if (auth.currentUser === null) {
-    return <Redirect to='/chat' />;
+  // ── Load partner name from Firestore ──────────────────────
+  useEffect(() => {
+    if (!currentUser) return;
+    const userRef = doc(firestore, 'users', currentUser.email);
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (!snap.exists()) return;
+      const cu = snap.data().currentuser || '';
+      setCallPartner(cu ? minOf(cu) : '');
+    });
+    return () => unsub();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  }
+  // ── Cleanup on unmount ────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      cleanupPC();
+      // stop tracks via ref so closure has latest value
+    };
+  }, [cleanupPC]);
 
+  if (!currentUser) return <Navigate to="/chat" replace />;
 
-  firestore.collection("users").doc(auth.currentUser.email).onSnapshot(
-    snapshot => {
+  // ── Create or reuse RTCPeerConnection ────────────────────
+  const getPC = () => {
+    if (pcRef.current) return pcRef.current;
+    const pc = new RTCPeerConnection(SERVERS);
 
-      const client = snapshot.data()["currentuser"]
-      const minClient = client.substring(0, client.indexOf("@"))
-      setCallId(snapshot.data()["mycalls"][minClient])
-    })
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      if (state === 'connected')     { setCallStatus(STATUS.CONNECTED); setRemoteActive(true); }
+      if (state === 'disconnected')  { setCallStatus(STATUS.RECONNECTING); }
+      if (state === 'failed')        { setCallStatus(STATUS.ERROR); setErrorMsg('Peer connection failed. Try again.'); }
+      if (state === 'closed')        { setCallStatus(STATUS.ENDED); }
+    };
 
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'failed') {
+        // Try ICE restart
+        pc.restartIce();
+        setCallStatus(STATUS.RECONNECTING);
+      }
+    };
 
-
-  const servers = {
-    iceServers: [
-      {
-        urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
-      },
-    ],
-    iceCandidatePoolSize: 10,
+    pcRef.current = pc;
+    return pc;
   };
 
-  const pc = new RTCPeerConnection(servers);
+  // ── Start local media ────────────────────────────────────
+  const startWebcam = async () => {
+    setCallStatus(STATUS.REQUESTING_MEDIA);
+    const pc = getPC();
+    let localStream;
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch (err) {
+      // Fallback: audio only if video denied
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        setCameraOn(false);
+      } catch (audioErr) {
+        throw new Error('Camera/microphone access was denied. Please allow access and try again.');
+      }
+    }
 
-  async function webCam() {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    remoteStream = new MediaStream();
+    const remoteStream = new MediaStream();
 
-    setMystream(localStream)
-
-    // Push tracks from local stream to peer connection
-    localStream.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream);
-    });
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
     pc.ontrack = (event) => {
-      event.streams[0].getTracks().forEach((track) => {
-        remoteStream.addTrack(track);
-      })
+      event.streams[0].getTracks().forEach((track) => remoteStream.addTrack(track));
+      setRemoteActive(true);
     };
-    webcamVideo.current.srcObject = localStream;
-    remoteVideo.current.srcObject = remoteStream;
 
+    if (webcamRef.current) webcamRef.current.srcObject = localStream;
+    if (remoteRef.current) remoteRef.current.srcObject = remoteStream;
+    setMyStream(localStream);
+    setCallStatus(STATUS.CONNECTING);
+    return localStream;
   };
 
-  async function callButtonClick(me, minMe, client, minClient) {
+  // ── Caller side ──────────────────────────────────────────
+  const createCallOffer = async (me, minMe, client, minClient) => {
+    const pc = getPC();
+    const callDocRef = doc(collection(firestore, 'calls'));
+    const offerCandidates = collection(callDocRef, 'offerCandidates');
+    const answerCandidates = collection(callDocRef, 'answerCandidates');
 
-    const callDoc = firestore.collection('calls').doc();
-    const offerCandidates = callDoc.collection('offerCandidates');
-    const answerCandidates = callDoc.collection('answerCandidates');
+    // Write callId to both users atomically
+    const [mySnap, theirSnap] = await Promise.all([
+      getDoc(doc(firestore, 'users', me)),
+      getDoc(doc(firestore, 'users', client)),
+    ]);
 
-
-    firestore.collection("users").doc(me).get().then(e => {
-
-        let mycalls = e.data()["mycalls"]
-        mycalls[minClient] = callDoc.id
-
-        firestore.collection("users").doc(me).update({
-          mycalls: mycalls
-
-        })
-        firestore.collection("users").doc(client).get().then(snap => {
-
-            let clientcalls = snap.data()["mycalls"]
-            clientcalls[minMe] = callDoc.id
-
-            firestore.collection("users").doc(client).update({
-              mycalls: clientcalls
-            })
-          })
-      })
+    await Promise.all([
+      updateDoc(doc(firestore, 'users', me), {
+        mycalls: { ...mySnap.data().mycalls, [minClient]: callDocRef.id },
+      }),
+      updateDoc(doc(firestore, 'users', client), {
+        mycalls: { ...theirSnap.data().mycalls, [minMe]: callDocRef.id },
+      }),
+    ]);
 
     pc.onicecandidate = (event) => {
-      event.candidate && offerCandidates.add(event.candidate.toJSON());
-    };
-    const offerDescription = await pc.createOffer();
-    await pc.setLocalDescription(offerDescription);
-
-    const offer = {
-      sdp: offerDescription.sdp,
-      type: offerDescription.type,
+      if (event.candidate) addDoc(offerCandidates, event.candidate.toJSON());
     };
 
-    await callDoc.set({ offer });
+    const offerDesc = await pc.createOffer();
+    await pc.setLocalDescription(offerDesc);
+    await setDoc(callDocRef, { offer: { sdp: offerDesc.sdp, type: offerDesc.type } });
 
-    // Listen for remote answer
-    callDoc.onSnapshot((snapshot) => {
-      const data = snapshot.data();
+    // Listen for answer
+    unsubCallRef.current = onSnapshot(callDocRef, (snap) => {
+      const data = snap.data();
       if (!pc.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc.setRemoteDescription(answerDescription);
+        pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
     });
 
-    // When answered, add candidate to peer connection
-    answerCandidates.onSnapshot((snapshot) => {
-      snapshot.docChanges().forEach((change) => {
+    // Listen for answer candidates
+    unsubAnswerRef.current = onSnapshot(answerCandidates, (snap) => {
+      snap.docChanges().forEach((change) => {
         if (change.type === 'added') {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.addIceCandidate(candidate);
+          pc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(() => {});
         }
       });
     });
-
-    hangupButton.current.disabled = false;
   };
 
-  async function answerButtonClick(me, minClient) {
-
-    const callDoc = firestore.collection('calls').doc(callId);
-    const answerCandidates = callDoc.collection('answerCandidates');
-    const offerCandidates = callDoc.collection('offerCandidates');
+  // ── Callee side ──────────────────────────────────────────
+  const answerCall = async (answerId) => {
+    const pc = getPC();
+    const callDocRef = doc(firestore, 'calls', answerId);
+    const answerCandidates = collection(callDocRef, 'answerCandidates');
+    const offerCandidates = collection(callDocRef, 'offerCandidates');
 
     pc.onicecandidate = (event) => {
-      event.candidate && answerCandidates.add(event.candidate.toJSON());
+      if (event.candidate) addDoc(answerCandidates, event.candidate.toJSON());
     };
-    const callData = (await callDoc.get()).data();
-    const offerDescription = callData.offer;
-    await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-    const answerDescription = await pc.createAnswer();
-    await pc.setLocalDescription(answerDescription);
+    const callData = (await getDoc(callDocRef)).data();
+    if (!callData?.offer) throw new Error('Call not found or already ended.');
 
-    const answer = {
-      type: answerDescription.type,
-      sdp: answerDescription.sdp,
-    };
-    await callDoc.update({ answer });
+    await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
+    const answerDesc = await pc.createAnswer();
+    await pc.setLocalDescription(answerDesc);
+    await updateDoc(callDocRef, { answer: { type: answerDesc.type, sdp: answerDesc.sdp } });
 
-    offerCandidates.onSnapshot((snapshot) => {
-      snapshot.docChanges().forEach((change) => {
+    // Listen for offer candidates
+    unsubOfferRef.current = onSnapshot(offerCandidates, (snap) => {
+      snap.docChanges().forEach((change) => {
         if (change.type === 'added') {
-          let data = change.doc.data();
-          pc.addIceCandidate(new RTCIceCandidate(data));
+          pc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(() => {});
         }
       });
     });
   };
 
-  function muteMic() {
-    mystream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
-  }
+  // ── Main "Start call" handler ────────────────────────────
+  const handleStartCall = async () => {
+    if (callStarted) return;
+    setCallStarted(true);
+    setErrorMsg('');
 
-  function muteCam() {
-    mystream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
-  }
+    try {
+      const me = currentUser.email;
+      const minMe = minOf(me);
 
+      const userSnap = await getDoc(doc(firestore, 'users', me));
+      const data = userSnap.data();
+      const currentuser = data?.currentuser || '';
+
+      if (!currentuser) {
+        throw new Error('No chat partner selected. Go back to chat and open a conversation first.');
+      }
+
+      const minCurrentuser = minOf(currentuser);
+      const existingCallId = data.mycalls?.[minCurrentuser] || '';
+
+      await startWebcam();
+
+      if (!existingCallId) {
+        await createCallOffer(me, minMe, currentuser, minCurrentuser);
+      } else {
+        await answerCall(existingCallId);
+      }
+    } catch (err) {
+      setCallStatus(STATUS.ERROR);
+      setErrorMsg(err.message || 'Something went wrong starting the call.');
+      setCallStarted(false);
+      cleanupPC();
+    }
+  };
+
+  // ── Hang up ──────────────────────────────────────────────
+  const handleHangUp = async () => {
+    const stream = myStream;
+    stopMedia(stream);
+    cleanupPC();
+    setCallStatus(STATUS.ENDED);
+
+    try {
+      const me = currentUser.email;
+      const minMe = minOf(me);
+
+      const userSnap = await getDoc(doc(firestore, 'users', me));
+      const currentuser = userSnap.data()?.currentuser || '';
+      const minCurrentuser = currentuser ? minOf(currentuser) : '';
+
+      if (currentuser && minCurrentuser) {
+        await updateDoc(doc(firestore, 'users', me), {
+          mycalls: { ...userSnap.data().mycalls, [minCurrentuser]: '' },
+        });
+        const theirSnap = await getDoc(doc(firestore, 'users', currentuser));
+        if (theirSnap.exists()) {
+          await updateDoc(doc(firestore, 'users', currentuser), {
+            mycalls: { ...theirSnap.data().mycalls, [minMe]: '' },
+          });
+        }
+      }
+    } catch (err) {
+      // Firestore cleanup failed — still navigate back
+      console.warn('Hangup cleanup error:', err.message);
+    } finally {
+      navigate('/chat', { replace: true });
+    }
+  };
+
+  // ── Media controls ───────────────────────────────────────
+  const toggleMic = () => {
+    if (!myStream) return;
+    const enabled = !micOn;
+    myStream.getAudioTracks().forEach((t) => (t.enabled = enabled));
+    setMicOn(enabled);
+  };
+
+  const toggleCamera = () => {
+    if (!myStream) return;
+    const enabled = !cameraOn;
+    myStream.getVideoTracks().forEach((t) => (t.enabled = enabled));
+    setCameraOn(enabled);
+  };
+
+  const isConnected = callStatus === STATUS.CONNECTED;
+  const isConnecting = callStatus === STATUS.CONNECTING || callStatus === STATUS.REQUESTING_MEDIA;
 
   return (
-    <div className="vc" id="vc">
-      <div className="videos">
-        <span>
-
-          <video id="webcamVideo" ref={webcamVideo} autoPlay playsInline></video>
-        </span>
-        <span>
-          <video id="remoteVideo" ref={remoteVideo} autoPlay playsInline></video>
-        </span>
+    <div className="vc">
+      {/* Status bar */}
+      <div className={`vc-status-bar vc-status--${callStatus}`}>
+        <span className={`vc-status-dot ${isConnected ? 'vc-status-dot--on' : ''} ${callStatus === STATUS.ERROR ? 'vc-status-dot--error' : ''}`} />
+        {callPartner ? (
+          <span>
+            {isConnected ? `In call with ` : STATUS_LABELS[callStatus]}
+            {isConnected && <strong>{callPartner}</strong>}
+          </span>
+        ) : (
+          <span>{STATUS_LABELS[callStatus]}</span>
+        )}
       </div>
 
+      {/* Error message */}
+      {errorMsg && (
+        <div className="vc-error-banner">
+          ⚠️ {errorMsg}
+        </div>
+      )}
 
-      <div className="buttons">
-        <button id="callButton" ref={callButton}
-          onClick={() => {
-            document.getElementById("mic").classList.remove("disabled")
-            document.getElementById("camera").classList.remove("disabled")
+      {/* Videos */}
+      <div className="vc-videos">
+        <div className="vc-video-wrap">
+          <video ref={webcamRef} autoPlay playsInline muted className="vc-video vc-local" />
+          <span className="vc-video-label">You {!cameraOn && '(Camera off)'}</span>
+          {!myStream && (
+            <div className="vc-video-offline">
+              <span>📷</span>
+              <p>Camera not started</p>
+            </div>
+          )}
+        </div>
+        <div className="vc-video-wrap">
+          <video ref={remoteRef} autoPlay playsInline className="vc-video vc-remote" />
+          <span className="vc-video-label">{callPartner || 'Remote'}</span>
+          {!remoteActive && (
+            <div className="vc-video-offline">
+              {isConnecting ? (
+                <>
+                  <div className="vc-spinner" />
+                  <p>Waiting for {callPartner || 'peer'}…</p>
+                </>
+              ) : (
+                <>
+                  <span>👤</span>
+                  <p>{callPartner ? `${callPartner} not connected` : 'No remote video'}</p>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
-            document.getElementById("callButton").disabled = true
-            document.getElementById("callButton").classList.add("disabled")
-            const me = auth.currentUser.email;
-            const minMe = me.substring(0, me.indexOf("@"));
+      {/* Controls */}
+      <div className="vc-controls">
+        <Tooltip title={callStarted ? 'Call in progress' : (callPartner ? `Call ${callPartner}` : 'Start call')}>
+          <span>
+            <button
+              className={`vc-btn vc-btn--call ${callStarted ? 'vc-btn--disabled' : ''}`}
+              onClick={handleStartCall}
+              disabled={callStarted}
+            >
+              <img src={createCall} alt="Start call" />
+            </button>
+          </span>
+        </Tooltip>
 
-            firestore.collection("users").doc(me).get().then(snapshot => {
-                const currentuser = snapshot.data()["currentuser"]
-                const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
+        <div className="vc-controls-sep" />
 
-                var usercallId = snapshot.data()["mycalls"][minCurrentuser];
+        <Tooltip title={cameraOn ? 'Turn off camera' : 'Turn on camera'}>
+          <button
+            className={`vc-btn vc-btn--media ${!cameraOn ? 'vc-btn--off' : ''} ${!myStream ? 'vc-btn--disabled' : ''}`}
+            onClick={toggleCamera}
+            disabled={!myStream}
+          >
+            <img src={video} alt="Camera" />
+          </button>
+        </Tooltip>
 
-                if(!callClicked){
-                if (usercallId === "") {
-                  webCam().then(() => {
-                    callButtonClick(me, minMe, currentuser, minCurrentuser);
-                  })
-                }
+        <Tooltip title={micOn ? 'Mute' : 'Unmute'}>
+          <button
+            className={`vc-btn vc-btn--media ${!micOn ? 'vc-btn--off' : ''} ${!myStream ? 'vc-btn--disabled' : ''}`}
+            onClick={toggleMic}
+            disabled={!myStream}
+          >
+            <img src={microphone} alt="Microphone" />
+          </button>
+        </Tooltip>
 
-                else {
-                  webCam().then(() => {
-                    answerButtonClick(me, minCurrentuser);
-                  })
-                }
+        <div className="vc-controls-sep" />
 
-                setCallclicked(true)
-                }
-
-              })
-          }}
-        ><img src={createCall} alt="" /></button>
-
-        <button id="camera" className="disabled"
-          onClick={() => {
-            try {
-              muteCam();
-              if(cameraOn){
-              document.getElementById("camera").style.backgroundColor =  "rgb(247, 14, 33)"
-                setCamaeraon(false)
-              }
-              else{
-                document.getElementById("camera").style.backgroundColor =  "rgb(10, 123, 168)"
-                setCamaeraon(true)
-              }
-            }
-            catch (err) {
-            }
-          }}>
-          <img src={video} alt="" />
-        </button>
-
-        <button id="mic" className="disabled"
-          onClick={() => {
-            try {
-              muteMic();
-              if(micOn){
-              document.getElementById("mic").style.backgroundColor =  "rgb(247, 14, 33)"
-                setMicon(false)
-              }
-              else{
-                document.getElementById("mic").style.backgroundColor =  "rgb(10, 123, 168)"
-                setMicon(true)
-              }
-            }
-            catch (err) {
-            }
-          }}>
-          <img src={microphone} alt="" />
-        </button>
-
-        <button id="hangupButton" ref={hangupButton}
-          onClick={() => {
-            const me = auth.currentUser.email;
-            const minMe = me.substring(0, me.indexOf("@"));
-
-            firestore.collection("users").doc(me).get().then(snapshot => {
-                const currentuser = snapshot.data()["currentuser"]
-                const minCurrentuser = currentuser.substring(0, currentuser.indexOf("@"));
-
-                let mycalls = snapshot.data()["mycalls"]
-                mycalls[minCurrentuser] = ""
-
-                firestore.collection("users").doc(me).update({
-                  mycalls: mycalls
-                })
-
-                firestore.collection("users").doc(currentuser).get().then(snap => {
-
-                    let clientcalls = snap.data()["mycalls"]
-                    clientcalls[minMe] = ""
-
-                    firestore.collection("users").doc(currentuser).update({
-                      mycalls: clientcalls
-                    })
-                  })
-
-
-              })
-
-            try {
-
-              mystream.getTracks().forEach(function (track) {
-                if (track.readyState === 'live') {
-                  track.stop();
-                  
-                }})
-            }
-            catch (err) {
-            }
-            history.push("/chat")
-          }}
-        >
-          <img src={endCall} alt="" /></button>
+        <Tooltip title="End call & return to chat">
+          <button className="vc-btn vc-btn--hangup" onClick={handleHangUp}>
+            <img src={endCall} alt="End call" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

@@ -1,156 +1,297 @@
-*{
-  margin: 0;
-  padding: 0;
-}
-
-.vc{
-  
-  background-color: #284c58;
+/* ─── Video Call Page ─── */
+.vc {
   width: 100vw;
   height: 100vh;
+  background: #1a1a2e;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ─── Status bar (top) ─── */
+.vc-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.3);
+  width: 100%;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.2px;
+  transition: background 0.3s ease;
+}
+
+.vc-status-bar.vc-status--connected {
+  background: rgba(0, 120, 80, 0.4);
+}
+
+.vc-status-bar.vc-status--reconnecting,
+.vc-status-bar.vc-status--error {
+  background: rgba(180, 50, 30, 0.4);
+}
+
+.vc-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.vc-status-dot--on {
+  background: #2ecc71;
+  box-shadow: 0 0 6px #2ecc71;
+}
+
+.vc-status-dot--error {
+  background: #e74c3c;
+  box-shadow: 0 0 6px #e74c3c;
+}
+
+/* ─── Error banner ─── */
+.vc-error-banner {
+  background: rgba(220, 50, 40, 0.9);
+  color: white;
+  padding: 10px 20px;
+  font-size: 13px;
+  width: 100%;
+  text-align: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+/* ─── Videos ─── */
+.vc-videos {
+  flex: 1;
+  display: flex;
+  gap: 14px;
   justify-content: center;
-}
-.videos {
-  display: flex;
-  justify-content: center;
-  /* flex-wrap: wrap; */
-}
-
-video {
-  width: 42vw;
-  height: 31.5vw;
-  /* min-width: fit-content;
-  min-height: fit-content; */
-  margin: 2rem;
-  background: #0c0c0c;
-  border-radius: 10px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  transform: rotateY(180deg);
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px 20px 80px;
+  width: 100%;
+  max-width: 1200px;
+  overflow: hidden;
 }
 
+.vc-video-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: #0c0c1a;
+  flex: 1;
+  min-width: 260px;
+  max-width: 560px;
+  aspect-ratio: 16/9;
+}
 
-.buttons{
-  display: flex;
-  flex-direction: row;
-  width: fit-content;
+.vc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+  background: #0c0c1a;
+}
+
+.vc-video-label {
   position: absolute;
-  bottom: 0;
-  margin-bottom: 20px;
-  box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+  bottom: 10px;
+  left: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.55);
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
 
-  background-color: rgba(22, 122, 114, 0.342);
+/* Offline / waiting overlay */
+.vc-video-offline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d1f;
+  color: rgba(255,255,255,0.5);
+  gap: 10px;
+  z-index: 1;
+}
 
-  
+.vc-video-offline span {
+  font-size: 40px;
+}
+
+.vc-video-offline p {
+  font-size: 13px;
+  text-align: center;
+  padding: 0 16px;
+}
+
+/* Spinner */
+.vc-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Controls bar ─── */
+.vc-controls {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(20, 20, 50, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 50px;
-  padding: 2px 10px;
+  padding: 8px 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 100;
+  white-space: nowrap;
 }
 
-#callButton{
-  background-color: rgb(3, 109, 23);
+/* Separator */
+.vc-controls-sep {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.15);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* ─── Buttons ─── */
+.vc-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 45px;
-  height: 45px;
-  border-radius: 30px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-
-  margin: 10px 15px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
   border: none;
-
-}
-
-#callButton img{
-  width: 25px;
-}
-
-#callButton:hover{
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
   cursor: pointer;
-  width: 45.5px;
-  height: 45.5px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  outline: none;
+  flex-shrink: 0;
 }
 
-#camera{
-  background-color: rgb(10, 123, 168);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 45px;
-  height: 45px;
-  border-radius: 30px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  margin: 10px 15px;
-  border: none;
-
+.vc-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
-#camera img{
-  width: 25px;
+.vc-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  pointer-events: none;
 }
 
-#camera:hover{
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
-  cursor: pointer;
-  width: 45.5px;
-  height: 45.5px;
-  background-color: rgb(247, 14, 33);
+/* Call button */
+.vc-btn--call {
+  background: #1db954;
+  width: 50px;
+  height: 50px;
+}
+.vc-btn--call:hover:not(:disabled) { background: #1ed760; }
+
+/* Media buttons */
+.vc-btn--media { background: #3a3a6a; }
+.vc-btn--media:hover:not(:disabled) { background: #4a4a8a; }
+
+/* Off state */
+.vc-btn--off { background: #c0392b !important; }
+
+/* Disabled */
+.vc-btn--disabled,
+.vc-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
-#mic{
-  background-color: rgb(10, 123, 168);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 45px;
-  height: 45px;
-  border-radius: 30px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+/* Hang up */
+.vc-btn--hangup {
+  background: #c0392b;
+  width: 50px;
+  height: 50px;
+}
+.vc-btn--hangup:hover { background: #e74c3c; }
 
-  margin: 10px 15px;
-  border: none;
+/* ─── Responsive ─── */
+@media (max-width: 700px) {
+  .vc-videos {
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 90px;
+    align-items: stretch;
+  }
 
+  .vc-video-wrap {
+    min-width: 0;
+    max-width: 100%;
+    flex: none;
+    width: 100%;
+    max-height: 38vh;
+  }
+
+  .vc-controls {
+    padding: 6px 14px;
+    gap: 8px;
+    bottom: 16px;
+  }
+
+  .vc-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .vc-btn--call, .vc-btn--hangup {
+    width: 44px;
+    height: 44px;
+  }
+  .vc-btn img {
+    width: 18px;
+    height: 18px;
+  }
 }
 
-#mic img{
-  width: 25px;
-}
-
-#mic:hover{
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
-  cursor: pointer;
-  width: 45.5px;
-  height: 45.5px;
-  background-color: rgb(247, 14, 33);
-}
-
-.disabled{
-  opacity: 0.5;
-}
-
-#hangupButton{
-  background-color: rgb(233, 7, 7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 45px;
-  height: 45px;
-  border-radius: 30px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-
-  margin: 10px 15px;
-  border: none;
-
-}
-
-#hangupButton img{
-  width: 25px;
-}
-
-#hangupButton:hover{
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
-  cursor: pointer;
-  width: 45.5px;
-  height: 45.5px;
+@media (max-width: 400px) {
+  .vc-controls {
+    gap: 6px;
+    padding: 5px 10px;
+  }
+  .vc-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .vc-btn--call, .vc-btn--hangup {
+    width: 40px;
+    height: 40px;
+  }
 }
