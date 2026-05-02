@@ -1,442 +1,350 @@
-import { useState } from 'react';
-import { Link, useHistory, Redirect } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import '../CSS/Main.css';
 import titlelogo from '../Logo/video-call (1).png';
-import chatlogo from '../Logo/chatlogo.png';
-import schedule from '../Logo/schedule.png';
-import send from '../Logo/send.png';
 import vclogo from '../Logo/vclogo.png';
-import logout from '../Logo/logout.png';
 import { auth, firestore } from '../config/fbConfig';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  onSnapshot,
+} from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import LogoutIcon from '@mui/icons-material/Logout';
+import ChatIcon from '@mui/icons-material/Chat';
+import SearchIcon from '@mui/icons-material/Search';
+import SendIcon from '@mui/icons-material/Send';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 function Main() {
-
   const [message, setMessage] = useState('');
-  const [people, setPeople] = useState('');
-  const [done, setDone] = useState(false);
-  const [currentchatuser, SetCurrentchatuser] = useState('');
-  const [chatlength, setChatlength] = useState(null);
-  const [testuser, setTestuser] = useState("");
+  const [searchPeople, setSearchPeople] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [chatUsers, setChatUsers] = useState([]);
+  const [currentChatUser, setCurrentChatUser] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [sendingMsg, setSendingMsg] = useState(false);
+  // mobile: 'list' | 'chat'
+  const [mobileView, setMobileView] = useState('list');
 
+  const navigate = useNavigate();
+  const msgAreaRef = useRef(null);
+  const searchRef = useRef(null);
+  const unsubscribeRef = useRef(null);
 
-  let history = useHistory();
+  const currentUser = auth.currentUser;
+  const minEmail = (email) => email.substring(0, email.indexOf('@'));
+  const myMinEmail = currentUser ? minEmail(currentUser.email) : '';
 
-  if (auth.currentUser === null) {
-    return <Redirect to='/' />;
-  }
-
-  if (!done) {
-    setTimeout(() => {
-      firestore.collection("users").doc(auth.currentUser.email).get()
-        .then(snapshot => {
-          const chatusers = snapshot.data()["chatusers"]
-          chatusers.forEach(chatuser => {
-            createMeetUser(chatuser)
-          })
-        })
-      setDone(true);
-    })
-  }
-
-
-
-  firestore.collection("users").doc(auth.currentUser.email).onSnapshot(snapshot => {
-
-    const me = auth.currentUser.email
-    const minMe = me.substring(0, me.indexOf("@"))
-    const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"));
-
-    let changes = snapshot.data()
-
-    try {
-
-      if (minChatuser !== testuser || chatlength !== changes[minChatuser].length) {
-
-        const msgarea = document.getElementById("msgarea");
-        msgarea.innerHTML = "";
-
-        changes[minChatuser].forEach(chatinfo => {
-
-          if (chatinfo.user === minMe) {
-            let mymsg = document.createElement("div")
-            mymsg.classList.add("mymsg")
-
-            let user = document.createElement("div")
-            user.classList.add("user");
-            user.innerHTML = "you"
-
-            let msg = document.createElement("div")
-            msg.classList.add("msg");
-            msg.innerHTML = chatinfo.chat
-
-            mymsg.appendChild(user)
-            mymsg.appendChild(msg)
-
-            msgarea.appendChild(mymsg)
-            msgarea.scrollTop = msgarea.scrollHeight
-          }
-
-          else {
-            let sendermsg = document.createElement("div")
-            sendermsg.classList.add("sendermsg")
-
-            let user = document.createElement("div")
-            user.classList.add("user");
-            user.innerHTML = chatinfo.user
-
-            let msg = document.createElement("div")
-            msg.classList.add("msg");
-            msg.innerHTML = chatinfo.chat
-
-            sendermsg.appendChild(user)
-            sendermsg.appendChild(msg)
-
-            msgarea.appendChild(sendermsg)
-            msgarea.scrollTop = msgarea.scrollHeight
-
-
-          }
-
-        })
-        setChatlength(changes[minChatuser].length);
-        setTestuser(minChatuser);
-
+  // Load chat users list on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    const userDocRef = doc(firestore, 'users', currentUser.email);
+    const unsub = onSnapshot(userDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setChatUsers(snapshot.data().chatusers || []);
       }
+    });
+    return () => unsub();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Subscribe to live messages for the selected chat user
+  useEffect(() => {
+    if (!currentUser || !currentChatUser) return;
+    if (unsubscribeRef.current) unsubscribeRef.current();
 
+    const minChatUser = minEmail(currentChatUser);
+    const userDocRef = doc(firestore, 'users', currentUser.email);
+    const unsub = onSnapshot(userDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const chatData = snapshot.data()[minChatUser];
+        if (Array.isArray(chatData)) setMessages(chatData);
+      }
+    });
+    unsubscribeRef.current = unsub;
+    return () => unsub();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChatUser]);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (msgAreaRef.current) {
+      msgAreaRef.current.scrollTop = msgAreaRef.current.scrollHeight;
     }
-    catch (err) {
+  }, [messages]);
 
-    }
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearch(false);
+        setSearchResults([]);
+        setSearchPeople('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  })
-
-
-
-  const createPeopleElement = (docid) => {
-    const peoples = document.getElementById('peoples')
-    let peopleDiv = document.createElement('div');
-    peopleDiv.classList.add('people')
-    peopleDiv.innerHTML = docid;
-    peoples.appendChild(peopleDiv);
+  if (!currentUser) {
+    return <Navigate to="/" replace />;
   }
 
-  const createMeetUser = (thisUser) => {
-    const meets = document.getElementById("meets");
-    const meet = document.createElement("div")
-    meet.classList.add("meet");
-    meet.id = "meet";
+  const handlePeopleSearch = async (value) => {
+    setSearchPeople(value);
+    if (value.length < 2) { setSearchResults([]); return; }
+    const snapshot = await getDocs(collection(firestore, 'users'));
+    const results = [];
+    snapshot.docs.forEach((d) => {
+      if (d.id !== currentUser.email && d.id.includes(value)) results.push(d.id);
+    });
+    setSearchResults(results);
+  };
 
-    meet.innerHTML = `<img src=${schedule} /><span>${thisUser}</span>`;
-    meets.appendChild(meet)
-  }
+  const addChatUser = async (targetUser) => {
+    setShowSearch(false);
+    setSearchResults([]);
+    setSearchPeople('');
 
+    const myRef = doc(firestore, 'users', currentUser.email);
+    const mySnap = await getDoc(myRef);
+    const myData = mySnap.data();
+    if (myData.chatusers.includes(targetUser)) return;
+
+    const minTarget = minEmail(targetUser);
+    await updateDoc(myRef, {
+      chatusers: [...myData.chatusers, targetUser],
+      [minTarget]: [],
+      mycalls: { ...myData.mycalls, [minTarget]: '' },
+    });
+
+    const theirRef = doc(firestore, 'users', targetUser);
+    const theirSnap = await getDoc(theirRef);
+    const theirData = theirSnap.data();
+    await updateDoc(theirRef, {
+      chatusers: [...theirData.chatusers, currentUser.email],
+      [myMinEmail]: [],
+      mycalls: { ...theirData.mycalls, [myMinEmail]: '' },
+    });
+  };
+
+  const openChat = async (chatUser) => {
+    setCurrentChatUser(chatUser);
+    setMessages([]);
+    setMobileView('chat');
+    await updateDoc(doc(firestore, 'users', currentUser.email), { currentuser: chatUser });
+  };
+
+  const sendMessage = async () => {
+    if (!currentChatUser || message.trim() === '') return;
+    setSendingMsg(true);
+    const minChatUser = minEmail(currentChatUser);
+
+    const myRef = doc(firestore, 'users', currentUser.email);
+    const mySnap = await getDoc(myRef);
+    const myChat = [...(mySnap.data()[minChatUser] || [])];
+    myChat.push({ user: myMinEmail, chat: message.trim() });
+    await updateDoc(myRef, { [minChatUser]: myChat });
+
+    const theirRef = doc(firestore, 'users', currentChatUser);
+    const theirSnap = await getDoc(theirRef);
+    const theirChat = [...(theirSnap.data()[myMinEmail] || [])];
+    theirChat.push({ user: myMinEmail, chat: message.trim() });
+    await updateDoc(theirRef, { [myMinEmail]: theirChat });
+
+    setMessage('');
+    setSendingMsg(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate('/');
+  };
+
+  const avatarLetter = currentUser.displayName
+    ? currentUser.displayName.charAt(0).toUpperCase()
+    : currentUser.email.charAt(0).toUpperCase();
 
   return (
-    <div id="main">
-      <header className="main">
-
-
-        <img src={titlelogo} alt="" />
-        <div className="name">Microsoft Teams</div>
-
-        <div className="peopleContainer">
-          <input
-            id='peopleSearch'
-            type="search"
-            placeholder="Search for people..."
-            value={people}
-            onChange={(e) => {
-
-              const peoples = document.getElementById('peoples')
-              setPeople(e.target.value)
-
-              if (e.target.value.length < 2) {
-                peoples.innerHTML = "";
-
-              }
-
-              else {
-                peoples.innerHTML = "";
-                firestore.collection('users').get().then((snapshot) => {
-                  snapshot.docs.forEach(doc => {
-                    if (doc.id !== auth.currentUser.email) {
-                      if (doc.id.includes(e.target.value)) {
-                        createPeopleElement(doc.id);
-
-                      }
-                    }
-                  })
-                })
-              }
-
-            }}
-
-            onClick={() => {
-              const peoples = document.getElementById('peoples');
-              peoples.style.display = "flex";
-            }}
-          />
-
-          <div id='peoples' className="peoples"
-            onClick={(e) => {
-
-
-              const thisUser = e.target.innerHTML;
-
-              firestore.collection("users").doc(auth.currentUser.email).get()
-                .then(snapshot => {
-                  const chatusers = snapshot.data()["chatusers"]
-                  const mycalls = snapshot.data()["mycalls"]
-                  if (chatusers.includes(thisUser)) {
-                    console.log("Already chatting!")
-                  }
-
-                  else {
-
-                    createMeetUser(thisUser);
-
-                    chatusers.push(thisUser);
-                    mycalls[thisUser.substring(0, thisUser.indexOf('@'))] = "";
-
-                    firestore.collection("users").doc(auth.currentUser.email).update({
-                      chatusers: chatusers,
-                      [thisUser.substring(0, thisUser.indexOf('@'))]: [],
-                      mycalls: mycalls
-                    })
-
-                    firestore.collection("users").doc(thisUser).get().then(e => {
-                      const clientchatusers = e.data()["chatusers"]
-                      const clientcalls = e.data()["mycalls"]
-                      clientchatusers.push((auth.currentUser.email));
-                      clientcalls[auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))] = "";
-
-                      firestore.collection("users").doc(thisUser).update({
-                        chatusers: clientchatusers,
-                        [auth.currentUser.email.substring(0, auth.currentUser.email.indexOf('@'))]: [],
-                        mycalls: clientcalls
-                      })
-                    })
-
-                  }
-
-                })
-
-
-              const peoples = document.getElementById("peoples")
-              setPeople('')
-              peoples.style.display = "none"
-            }}
+    <div className="chat-app">
+      <header className="chat-header">
+        {/* Mobile back button when viewing chat */}
+        {mobileView === 'chat' && (
+          <IconButton
+            className="chat-back-btn"
+            size="small"
+            sx={{ color: 'white', mr: 0.5, display: { sm: 'none' } }}
+            onClick={() => setMobileView('list')}
           >
-            {/* div with class "people" */}
+            <ArrowBackIcon />
+          </IconButton>
+        )}
 
+        <Link to="/" className="chat-brand">
+          <img src={titlelogo} alt="" className="chat-logo" />
+          <span className="chat-brand-name">Microsoft Teams</span>
+        </Link>
+
+        <div className="chat-search-wrapper" ref={searchRef}>
+          <div className="chat-search-input-wrap">
+            <SearchIcon className="chat-search-icon" />
+            <input
+              type="search"
+              placeholder="Search people..."
+              className="chat-search-input"
+              value={searchPeople}
+              onChange={(e) => handlePeopleSearch(e.target.value)}
+              onFocus={() => setShowSearch(true)}
+            />
           </div>
+          {showSearch && searchResults.length > 0 && (
+            <div className="chat-search-dropdown">
+              {searchResults.map((user) => (
+                <div key={user} className="chat-search-result" onClick={() => addChatUser(user)}>
+                  <div className="result-avatar">{user.charAt(0).toUpperCase()}</div>
+                  <span>{user}</span>
+                  <PersonAddIcon className="result-add-icon" fontSize="small" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-
-        <div className="avatar">{auth.currentUser.displayName.slice(0, 1)}</div>
-        <button id="logout"
-          onClick={(e) => {
-            e.preventDefault();
-            auth.signOut().then(() => {
-
-              console.log('Signed Out')
-              history.push('/');
-            })
-          }}
-        >
-          <img src={logout} alt="" />
-        </button>
-
+        <div className="chat-header-right">
+          <Tooltip title={currentUser.displayName || currentUser.email}>
+            <div className="chat-avatar">{avatarLetter}</div>
+          </Tooltip>
+          <Tooltip title="Sign out">
+            <IconButton onClick={handleLogout} size="small" sx={{ color: 'white' }}>
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
       </header>
 
-      <div className="window">
-        <div className="left">
-          <div className="chatlogo">
-            <img src={chatlogo} alt="" />
-            <h6>Chat</h6>
+      <div className="chat-body">
+        <aside className="chat-sidebar">
+          <Tooltip title="Chat" placement="right">
+            <div className="sidebar-item sidebar-item--active">
+              <ChatIcon />
+              <span>Chat</span>
+            </div>
+          </Tooltip>
+        </aside>
+
+        {/* List panel — hidden on mobile when viewing a chat */}
+        <div className={`chat-list-panel ${mobileView === 'chat' ? 'chat-list-panel--hidden-mobile' : ''}`}>
+          <div className="chat-list-header">
+            <h2>Chat</h2>
           </div>
-        </div>
-        <div className="middle">
-          <div className="mhead">
-            <h3>Chat</h3>
-
-          </div>
-
-          <div className="meets" id="meets"
-            onClick={(e) => {
-
-              if (e.target.id === "") {
-
-                const chatUser = e.target.innerHTML
-                SetCurrentchatuser(chatUser);
-
-                const minChatuser = chatUser.substring(0, chatUser.indexOf("@"));
-                const me = auth.currentUser.email
-                const minMe = me.substring(0, me.indexOf("@"));
-                const msgarea = document.getElementById("msgarea");
-                const meetname = document.getElementById("meetname")
-                meetname.innerHTML = `Meeting with ${minChatuser}`;
-                msgarea.innerHTML = "";
-
-                document.getElementById("vclogo").style.display = "block";
-
-                firestore.collection("users").doc(auth.currentUser.email).get().then(snapshot => {
-                  const currentchats = snapshot.data()[minChatuser]
-
-                  currentchats.forEach(chatinfo => {
-                    if (chatinfo.user === minMe) {
-                      let mymsg = document.createElement("div")
-                      mymsg.classList.add("mymsg")
-
-                      let user = document.createElement("div")
-                      user.classList.add("user");
-                      user.innerHTML = "you"
-
-                      let msg = document.createElement("div")
-                      msg.classList.add("msg");
-                      msg.innerHTML = chatinfo.chat
-
-                      mymsg.appendChild(user)
-                      mymsg.appendChild(msg)
-
-                      msgarea.appendChild(mymsg)
-                      msgarea.scrollTop = msgarea.scrollHeight
-
-                    }
-
-                    else {
-                      let sendermsg = document.createElement("div")
-                      sendermsg.classList.add("sendermsg")
-
-                      let user = document.createElement("div")
-                      user.classList.add("user");
-                      user.innerHTML = chatinfo.user
-
-                      let msg = document.createElement("div")
-                      msg.classList.add("msg");
-                      msg.innerHTML = chatinfo.chat
-
-                      sendermsg.appendChild(user)
-                      sendermsg.appendChild(msg)
-
-                      msgarea.appendChild(sendermsg)
-                      msgarea.scrollTop = msgarea.scrollHeight
-
-
-                    }
-                  })
-                })
-
-                firestore.collection("users").doc(auth.currentUser.email).update({
-                  currentuser: e.target.innerHTML
-                })
-              }
-
-
-            }}
-          >
-
+          <div className="chat-list">
+            {chatUsers.length === 0 ? (
+              <div className="chat-list-empty">
+                <SearchIcon sx={{ fontSize: 40, color: '#aaa', mb: 1 }} />
+                <p>Search for people above to start a conversation</p>
+              </div>
+            ) : (
+              chatUsers.map((user) => {
+                const isActive = user === currentChatUser;
+                return (
+                  <div
+                    key={user}
+                    className={`chat-list-item ${isActive ? 'chat-list-item--active' : ''}`}
+                    onClick={() => openChat(user)}
+                  >
+                    <div className="chat-list-avatar">{user.charAt(0).toUpperCase()}</div>
+                    <div className="chat-list-info">
+                      <span className="chat-list-name">{minEmail(user)}</span>
+                      <span className="chat-list-email">{user}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
-
-        <div className="right">
-
-          <div className="rhead">
-            <div className="meettitle">
-              <img src={schedule} alt="" />
-              <h3 className="meetname" id="meetname">Create Your Meetings</h3>
-            </div>
-
-
-            <div className="rheadlogos">
-              <Link to='/chat/vc'><img id="vclogo" src={vclogo} alt=""
-
-              /></Link>
-            </div>
-          </div>
-
-          <div id="msgarea" className="msgarea">
-
-            <div className="welcome">You are all set to go..<br />
-              Open a chat stream to start chatting.</div>
-
-          </div>
-
-          <div className="rfoot">
-
-            <input className="msg" type="text" placeholder="Type a new message.."
-              value={message} onChange={(e) => {
-                setMessage(e.target.value)
-              }}
-
-              onKeyDown={(e) => {
-
-                if (e.key === 'Enter') {
-                  (document.getElementById("send")).click()
-                }
-              }}
-            />
-
-            <div className="ficons">
-              <div className="attach">
+        {/* Message panel — hidden on mobile when viewing list */}
+        <div className={`chat-msg-panel ${mobileView === 'list' ? 'chat-msg-panel--hidden-mobile' : ''}`}>
+          {currentChatUser ? (
+            <>
+              <div className="chat-msg-header">
+                <div className="chat-msg-title">
+                  <div className="chat-msg-header-avatar">{currentChatUser.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div className="chat-msg-header-name">{minEmail(currentChatUser)}</div>
+                    <div className="chat-msg-header-email">{currentChatUser}</div>
+                  </div>
+                </div>
+                <Tooltip title="Start video call">
+                  <Link to="/chat/vc">
+                    <IconButton color="primary" className="vc-button">
+                      <VideoCallIcon />
+                    </IconButton>
+                  </Link>
+                </Tooltip>
               </div>
 
-              <img id="send" className="send" src={send} alt=""
-                onClick={() => {
+              <div className="chat-msg-area" ref={msgAreaRef}>
+                {messages.length === 0 && (
+                  <div className="chat-msg-welcome">
+                    Say hello to <strong>{minEmail(currentChatUser)}</strong> 👋
+                  </div>
+                )}
+                {messages.map((item, idx) => {
+                  const isMe = item.user === myMinEmail;
+                  return (
+                    <div key={idx} className={`msg-bubble-wrap ${isMe ? 'msg-mine' : 'msg-theirs'}`}>
+                      <div className="msg-sender-label">{isMe ? 'You' : item.user}</div>
+                      <div className={`msg-bubble ${isMe ? 'msg-bubble--mine' : 'msg-bubble--theirs'}`}>
+                        {item.chat}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-
-                  setMessage('');
-
-                  const me = auth.currentUser.email;
-                  const minMe = me.substring(0, me.indexOf("@"))
-
-                  const minChatuser = currentchatuser.substring(0, currentchatuser.indexOf("@"))
-
-                  if (minChatuser !== "") {
-                    if (message.trim() !== "") {
-
-
-                      firestore.collection("users").doc(me).get().then(
-                        snapshot => {
-                          let mychat = snapshot.data()[minChatuser]
-                          mychat.push({
-                            user: minMe,
-                            chat: message
-                          })
-                          firestore.collection("users").doc(me).update({
-                            [minChatuser]: mychat
-                          })
-
-
-                          firestore.collection("users").doc(currentchatuser).get().then(e => {
-                            let userchat = e.data()[minMe]
-                            userchat.push({
-                              user: minMe,
-                              chat: message
-
-                            })
-
-                            firestore.collection("users").doc(currentchatuser).update({
-                              [minMe]: userchat
-                            })
-
-                          })
-
-                        })
+              <div className="chat-msg-input-area">
+                <input
+                  type="text"
+                  className="chat-msg-input"
+                  placeholder="Type a message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
                     }
-                  }
-
-                  else{
-                    alert("Open a chat stream.")
-                  }
-                }}
-              />
-
+                  }}
+                />
+                <IconButton
+                  onClick={sendMessage}
+                  disabled={sendingMsg || message.trim() === ''}
+                  color="primary"
+                  className="chat-send-btn"
+                >
+                  <SendIcon />
+                </IconButton>
+              </div>
+            </>
+          ) : (
+            <div className="chat-msg-placeholder">
+              <img src={vclogo} alt="" className="placeholder-icon" />
+              <h3>Open a conversation</h3>
+              <p>Select a person from the list or search to start chatting.</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -444,4 +352,3 @@ function Main() {
 }
 
 export default Main;
-
