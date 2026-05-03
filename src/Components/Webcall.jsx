@@ -9,8 +9,9 @@ import {
   addDoc,
   setDoc,
   onSnapshot,
+  deleteField,
 } from 'firebase/firestore';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
 import video from '../Logo/video.png';
 import microphone from '../Logo/mic.png';
@@ -34,6 +35,7 @@ const STATUS = {
   IDLE: 'idle',
   REQUESTING_MEDIA: 'requesting_media',
   CONNECTING: 'connecting',
+  RINGING: 'ringing',
   CONNECTED: 'connected',
   RECONNECTING: 'reconnecting',
   ENDED: 'ended',
@@ -44,6 +46,7 @@ const STATUS_LABELS = {
   [STATUS.IDLE]: 'Ready to call',
   [STATUS.REQUESTING_MEDIA]: 'Starting camera & mic…',
   [STATUS.CONNECTING]: 'Connecting…',
+  [STATUS.RINGING]: 'Ringing…',
   [STATUS.CONNECTED]: 'Connected',
   [STATUS.RECONNECTING]: 'Reconnecting…',
   [STATUS.ENDED]: 'Call ended',
@@ -61,6 +64,7 @@ function Webcall() {
   const [remoteActive, setRemoteActive] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const webcamRef = useRef(null);
   const remoteRef = useRef(null);
   const pcRef = useRef(null);
@@ -68,6 +72,9 @@ function Webcall() {
   const unsubCallRef = useRef(null);
   const unsubAnswerRef = useRef(null);
   const unsubOfferRef = useRef(null);
+  const myStreamRef = useRef(null);
+  // Ref to handleStartCall so the autoStart effect can call it after first render
+  const handleStartCallRef = useRef(null);
 
   const currentUser = auth.currentUser;
 
@@ -113,6 +120,13 @@ function Webcall() {
     };
   }, [cleanupPC]);
 
+  // ── Auto-start when navigated here with { state: { autoStart: true } } ───
+  useEffect(() => {
+    if (!location.state?.autoStart) return;
+    handleStartCallRef.current?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!currentUser) return <Navigate to="/chat" replace />;
 
   // ── Create or reuse RTCPeerConnection ────────────────────
@@ -146,11 +160,17 @@ function Webcall() {
     const pc = getPC();
     let localStream;
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
     } catch (err) {
       // Fallback: audio only if video denied
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: false,
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        });
         setCameraOn(false);
       } catch (audioErr) {
         throw new Error('Camera/microphone access was denied. Please allow access and try again.');
@@ -169,6 +189,7 @@ function Webcall() {
     if (webcamRef.current) webcamRef.current.srcObject = localStream;
     if (remoteRef.current) remoteRef.current.srcObject = remoteStream;
     setMyStream(localStream);
+    myStreamRef.current = localStream;
     setCallStatus(STATUS.CONNECTING);
     return localStream;
   };
@@ -203,11 +224,29 @@ function Webcall() {
     await pc.setLocalDescription(offerDesc);
     await setDoc(callDocRef, { offer: { sdp: offerDesc.sdp, type: offerDesc.type } });
 
-    // Listen for answer
+    // Notify callee of incoming call
+    await updateDoc(doc(firestore, 'users', client), {
+      incomingCall: {
+        from: me,
+        callerName: currentUser.displayName || minMe,
+        callId: callDocRef.id,
+      },
+    });
+
+    // Listen for answer or decline
     unsubCallRef.current = onSnapshot(callDocRef, (snap) => {
       const data = snap.data();
       if (!pc.currentRemoteDescription && data?.answer) {
         pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+      if (data?.callDeclined) {
+        stopMedia(myStreamRef.current);
+        myStreamRef.current = null;
+        cleanupPC();
+        setCallStatus(STATUS.ENDED);
+        setErrorMsg('Call was declined.');
+        setCallStarted(false);
+        setTimeout(() => navigate('/chat', { replace: true }), 2500);
       }
     });
 
@@ -275,6 +314,7 @@ function Webcall() {
 
       if (!existingCallId) {
         await createCallOffer(me, minMe, currentuser, minCurrentuser);
+        setCallStatus(STATUS.RINGING);
       } else {
         await answerCall(existingCallId);
       }
@@ -286,10 +326,14 @@ function Webcall() {
     }
   };
 
+  // Sync ref with latest closure so the autoStart effect can call it
+  handleStartCallRef.current = handleStartCall;
+
   // ── Hang up ──────────────────────────────────────────────
   const handleHangUp = async () => {
-    const stream = myStream;
+    const stream = myStreamRef.current || myStream;
     stopMedia(stream);
+    myStreamRef.current = null;
     cleanupPC();
     setCallStatus(STATUS.ENDED);
 
@@ -307,9 +351,14 @@ function Webcall() {
         });
         const theirSnap = await getDoc(doc(firestore, 'users', currentuser));
         if (theirSnap.exists()) {
-          await updateDoc(doc(firestore, 'users', currentuser), {
+          const theirUpdates = {
             mycalls: { ...theirSnap.data().mycalls, [minMe]: '' },
-          });
+          };
+          // Clear pending incoming call notification if we cancelled before they answered
+          if (theirSnap.data().incomingCall?.from === me) {
+            theirUpdates.incomingCall = deleteField();
+          }
+          await updateDoc(doc(firestore, 'users', currentuser), theirUpdates);
         }
       }
     } catch (err) {
@@ -336,6 +385,7 @@ function Webcall() {
   };
 
   const isConnected = callStatus === STATUS.CONNECTED;
+  const isRinging = callStatus === STATUS.RINGING;
   const isConnecting = callStatus === STATUS.CONNECTING || callStatus === STATUS.REQUESTING_MEDIA;
 
   return (
@@ -377,7 +427,12 @@ function Webcall() {
           <span className="vc-video-label">{callPartner || 'Remote'}</span>
           {!remoteActive && (
             <div className="vc-video-offline">
-              {isConnecting ? (
+              {isRinging ? (
+                <>
+                  <div className="vc-spinner vc-spinner--ring" />
+                  <p>Ringing {callPartner}…</p>
+                </>
+              ) : isConnecting ? (
                 <>
                   <div className="vc-spinner" />
                   <p>Waiting for {callPartner || 'peer'}…</p>

@@ -151,6 +151,19 @@
   animation: spin 0.8s linear infinite;
 }
 
+/* Ring pulse for "Ringing…" state */
+.vc-spinner--ring {
+  border: none;
+  background: transparent;
+  animation: ringPulse 1.4s ease-out infinite;
+}
+
+@keyframes ringPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(98,100,167,0.7), 0 0 0 0   rgba(98,100,167,0.4); }
+  50%  { box-shadow: 0 0 0 16px rgba(98,100,167,0),  0 0 0 28px rgba(98,100,167,0); }
+  100% { box-shadow: 0 0 0 0   rgba(98,100,167,0.7), 0 0 0 0   rgba(98,100,167,0.4); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

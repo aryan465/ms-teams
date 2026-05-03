@@ -11,6 +11,7 @@ import {
   getDocs,
   updateDoc,
   onSnapshot,
+  deleteField,
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import IconButton from '@mui/material/IconButton';
@@ -21,7 +22,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import SendIcon from '@mui/icons-material/Send';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-
+import CallIcon from '@mui/icons-material/Call';
+import CallEndIcon from '@mui/icons-material/CallEnd';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 function Main() {
@@ -35,11 +37,13 @@ function Main() {
   const [sendingMsg, setSendingMsg] = useState(false);
   // mobile: 'list' | 'chat'
   const [mobileView, setMobileView] = useState('list');
+  const [incomingCall, setIncomingCall] = useState(null);
 
   const navigate = useNavigate();
   const msgAreaRef = useRef(null);
   const searchRef = useRef(null);
   const unsubscribeRef = useRef(null);
+  const ringIntervalRef = useRef(null);
 
   const currentUser = auth.currentUser;
   const minEmail = (email) => email.substring(0, email.indexOf('@'));
@@ -52,6 +56,7 @@ function Main() {
     const unsub = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
         setChatUsers(snapshot.data().chatusers || []);
+        setIncomingCall(snapshot.data().incomingCall || null);
       }
     });
     return () => unsub();
@@ -95,6 +100,43 @@ function Main() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Ring tone when there's an incoming call
+  useEffect(() => {
+    if (!incomingCall) {
+      if (ringIntervalRef.current) {
+        clearInterval(ringIntervalRef.current);
+        ringIntervalRef.current = null;
+      }
+      return;
+    }
+    const playRing = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.45].forEach((delay) => {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = 480;
+          g.gain.setValueAtTime(0.25, ctx.currentTime + delay);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.35);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.36);
+        });
+        setTimeout(() => ctx.close().catch(() => {}), 1200);
+      } catch (_) {}
+    };
+    playRing();
+    ringIntervalRef.current = setInterval(playRing, 2000);
+    return () => {
+      if (ringIntervalRef.current) {
+        clearInterval(ringIntervalRef.current);
+        ringIntervalRef.current = null;
+      }
+    };
+  }, [incomingCall]);
 
   if (!currentUser) {
     return <Navigate to="/" replace />;
@@ -171,12 +213,65 @@ function Main() {
     navigate('/');
   };
 
+  const acceptCall = async () => {
+    const { from } = incomingCall;
+    setIncomingCall(null);
+    await updateDoc(doc(firestore, 'users', currentUser.email), {
+      incomingCall: deleteField(),
+      currentuser: from,
+    });
+    navigate('/chat/vc', { state: { autoStart: true } });
+  };
+
+  const declineCall = async () => {
+    const { callId } = incomingCall;
+    setIncomingCall(null);
+    await updateDoc(doc(firestore, 'users', currentUser.email), {
+      incomingCall: deleteField(),
+    });
+    if (callId) {
+      try {
+        await updateDoc(doc(firestore, 'calls', callId), { callDeclined: true });
+      } catch (_) {}
+    }
+  };
+
   const avatarLetter = currentUser.displayName
     ? currentUser.displayName.charAt(0).toUpperCase()
     : currentUser.email.charAt(0).toUpperCase();
 
   return (
     <div className="chat-app">
+      {/* Incoming call overlay */}
+      {incomingCall && (
+        <div className="incoming-call-overlay">
+          <div className="incoming-call-card">
+            <div className="incoming-call-avatar">
+              {incomingCall.callerName?.charAt(0).toUpperCase() || '?'}
+            </div>
+            <div className="incoming-call-info">
+              <span className="incoming-call-label">Incoming video call</span>
+              <span className="incoming-call-name">{incomingCall.callerName}</span>
+            </div>
+            <div className="incoming-call-actions">
+              <IconButton
+                onClick={acceptCall}
+                title="Accept"
+                sx={{ bgcolor: '#38a169', color: 'white', '&:hover': { bgcolor: '#2f9158' } }}
+              >
+                <CallIcon />
+              </IconButton>
+              <IconButton
+                onClick={declineCall}
+                title="Decline"
+                sx={{ bgcolor: '#e53e3e', color: 'white', '&:hover': { bgcolor: '#c53030' } }}
+              >
+                <CallEndIcon />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="chat-header">
         {/* Mobile back button when viewing chat */}
         {mobileView === 'chat' && (
@@ -287,11 +382,13 @@ function Main() {
                   </div>
                 </div>
                 <Tooltip title="Start video call">
-                  <Link to="/chat/vc">
-                    <IconButton color="primary" className="vc-button">
-                      <VideoCallIcon />
-                    </IconButton>
-                  </Link>
+                  <IconButton
+                    color="primary"
+                    className="vc-button"
+                    onClick={() => navigate('/chat/vc', { state: { autoStart: true } })}
+                  >
+                    <VideoCallIcon />
+                  </IconButton>
                 </Tooltip>
               </div>
 
