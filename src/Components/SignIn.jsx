@@ -1,19 +1,9 @@
 import React, { useState } from 'react';
 import '../CSS/Start.css';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/fbConfig';
-import titlelogo from '../Logo/video-call (1).png';
+import SynqLogo from './shared/SynqLogo';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -40,73 +30,57 @@ export default function SignIn() {
     <div className="auth-page">
       <header className="start-header">
         <Link to='/' className="start-brand">
-          <img src={titlelogo} alt="Microsoft Teams" className="start-logo" />
-          <span className="start-brand-name">Microsoft Teams</span>
+          <SynqLogo size={30} />
+          <span className="start-brand-name">Synq</span>
         </Link>
       </header>
 
       <main className="auth-main">
-        <Container maxWidth="xs">
-          <Box className="auth-card">
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-              <LockOutlinedIcon />
-            </Avatar>
-            <Typography component="h1" variant="h5" fontWeight={600} gutterBottom>
-              Sign in
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Welcome back! Enter your credentials to continue.
-            </Typography>
+        <div className="auth-card">
+          <div className="auth-logo-wrap">
+            <SynqLogo size={44} />
+          </div>
+          <h1 className="auth-title">Sign in</h1>
+          <p className="auth-subtitle">Welcome back — good to see you again.</p>
 
-            {error && (
-              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+          {error && <div className="auth-error">{error}</div>}
 
-            <Box component="form" onSubmit={handleSignin} sx={{ width: '100%' }}>
-              <TextField
-                margin="normal"
+          <form className="auth-form" onSubmit={handleSignin}>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="si-email">Email</label>
+              <input
+                id="si-email"
+                className="auth-input"
+                type="email"
                 required
-                fullWidth
-                label="Email Address"
-                name="email"
                 autoComplete="email"
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
+            </div>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="si-password">Password</label>
+              <input
+                id="si-password"
+                className="auth-input"
                 type="password"
+                required
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{ mt: 3, mb: 2, py: 1.5 }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
-              </Button>
-              <Grid container justifyContent="center">
-                <Grid item>
-                  <Link to="/signup" className="auth-link">
-                    Don't have an account? Sign Up
-                  </Link>
-                </Grid>
-              </Grid>
-            </Box>
-          </Box>
-        </Container>
+            </div>
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? <span className="auth-spinner" /> : 'Sign In'}
+            </button>
+          </form>
+
+          <p className="auth-footer-text">
+            Don't have an account?{' '}
+            <Link to="/signup" className="auth-link">Sign Up</Link>
+          </p>
+        </div>
       </main>
     </div>
   );

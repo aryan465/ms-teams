@@ -1,20 +1,10 @@
 import React, { useState } from 'react';
 import '../CSS/Start.css';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, firestore } from '../config/fbConfig';
-import titlelogo from '../Logo/video-call (1).png';
+import SynqLogo from './shared/SynqLogo';
 
 export default function SignUp() {
   const [fname, setFname] = useState('');
@@ -56,99 +46,83 @@ export default function SignUp() {
     <div className="auth-page">
       <header className="start-header">
         <Link to='/' className="start-brand">
-          <img src={titlelogo} alt="Microsoft Teams" className="start-logo" />
-          <span className="start-brand-name">Microsoft Teams</span>
+          <SynqLogo size={30} />
+          <span className="start-brand-name">Synq</span>
         </Link>
       </header>
 
       <main className="auth-main">
-        <Container maxWidth="xs">
-          <Box className="auth-card">
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-              <LockOutlinedIcon />
-            </Avatar>
-            <Typography component="h1" variant="h5" fontWeight={600} gutterBottom>
-              Create account
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Join Teams and start collaborating today.
-            </Typography>
+        <div className="auth-card">
+          <div className="auth-logo-wrap">
+            <SynqLogo size={44} />
+          </div>
+          <h1 className="auth-title">Create account</h1>
+          <p className="auth-subtitle">Join Synq and start collaborating today.</p>
 
-            {error && (
-              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+          {error && <div className="auth-error">{error}</div>}
 
-            <Box component="form" onSubmit={handleSignup} sx={{ width: '100%' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="First Name"
-                    name="firstName"
-                    autoComplete="given-name"
-                    autoFocus
-                    value={fname}
-                    onChange={(e) => setFname(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Last Name"
-                    name="lastName"
-                    autoComplete="family-name"
-                    value={lname}
-                    onChange={(e) => setLname(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    name="password"
-                    label="Password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{ mt: 3, mb: 2, py: 1.5 }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
-              </Button>
-              <Grid container justifyContent="center">
-                <Grid item>
-                  <Link to="/signin" className="auth-link">
-                    Already have an account? Sign in
-                  </Link>
-                </Grid>
-              </Grid>
-            </Box>
-          </Box>
-        </Container>
+          <form className="auth-form" onSubmit={handleSignup}>
+            <div className="auth-row">
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="su-fname">First Name</label>
+                <input
+                  id="su-fname"
+                  className="auth-input"
+                  type="text"
+                  required
+                  autoComplete="given-name"
+                  autoFocus
+                  value={fname}
+                  onChange={(e) => setFname(e.target.value)}
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="su-lname">Last Name</label>
+                <input
+                  id="su-lname"
+                  className="auth-input"
+                  type="text"
+                  required
+                  autoComplete="family-name"
+                  value={lname}
+                  onChange={(e) => setLname(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-email">Email</label>
+              <input
+                id="su-email"
+                className="auth-input"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-password">Password</label>
+              <input
+                id="su-password"
+                className="auth-input"
+                type="password"
+                required
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? <span className="auth-spinner" /> : 'Create Account'}
+            </button>
+          </form>
+
+          <p className="auth-footer-text">
+            Already have an account?{' '}
+            <Link to="/signin" className="auth-link">Sign in</Link>
+          </p>
+        </div>
       </main>
     </div>
   );
