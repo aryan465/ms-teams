@@ -1,32 +1,91 @@
-# Microsoft Teams Clone
+# Synq
 
-This project is made under ***Microsoft Engage Mentorship Programme 2021***. 
+A real-time messaging and video calling app built with React and Firebase.  
+Try it live → **https://ms-teams-b465g.web.app**
 
-#### Deployment
-This project is deployed at https://***REMOVED***.web.app/.
+---
 
-Clink the link and give it a try..
+## What can you do with Synq?
 
-## Breakdown
+- **Chat** — send instant messages to anyone who has a Synq account
+- **Video call** — one-click HD video calls with echo cancellation
+- **Find people** — search for any registered user and start a conversation
+- **Themes** — switch between Violet Night, Indigo Slate, and Clean Light from the chat header
 
-### Start page
-This page contains the options for Signup and Signin.
+---
 
-### Signup
-It is the window that contains form for username, email and password. A user can create his/her account here.
+## Getting started
 
-### Signin
-It is the window that contains form for user email and password and enables the user to log into the chatwindow after entering his correct credentials.
+### 1. Create an account
+Go to the app and click **Get started**. Enter your first name, last name, email, and a password. Hit **Create Account**.
 
-### Chatwindow 
-Once the user has successfully logged in, he is redirected to his chatwindow. On top of chatwindow, there is a search bar which enable the logged in user to search for other users who have an account created and start chatting with them.
+### 2. Sign in
+Click **Sign in**, enter your email and password, and you're in.  
+Forgot your password? Click **Forgot password?** on the sign-in screen — we'll email you a reset link.
 
-Then, on the left portion of the screen is a list of all the users which the logged in user has chatted with. On clicking on any of the users here all the chats appear on the right window.
+### 3. Find someone to chat with
+Use the **search bar** at the top of the chat screen to search for another user by their email address. Click their name to add them to your contacts list.
 
-The right window also contains the button for video call. 
+### 4. Send a message
+Click on any contact from the left panel to open the conversation. Type in the box at the bottom and press **Enter** or the send button.
 
-#### Webcall
-On clicking it, the user is redirected to video call window. Here, he/she can click the call button to create a new call or join an existing one. there are also controls for audio and video muting.
+### 5. Start a video call
+Open a conversation, then click the **Video Call** button in the top-right of the chat panel. The other person will receive an incoming call notification and can accept or decline. Both of you need to be signed in for the call to connect.
 
-### Technologies Used
-This project is built using **React.js** and **Firebase**.
+### 6. During a call
+| Button | What it does |
+|--------|-------------|
+| 🎥 Camera | Toggle your video on/off |
+| 🎤 Mic | Mute/unmute yourself |
+| 🔴 End call | Hang up and return to chat |
+
+---
+
+## Running locally
+
+> You need Node.js 16+ and a Firebase project with Authentication and Firestore enabled.
+
+```bash
+git clone https://github.com/aryan465/ms-teams.git
+cd ms-teams
+npm install
+```
+
+Copy `.env.example` to `.env` and fill in your Firebase project credentials:
+
+```
+REACT_APP_FIREBASE_API_KEY=...
+REACT_APP_FIREBASE_AUTH_DOMAIN=...
+REACT_APP_FIREBASE_PROJECT_ID=...
+REACT_APP_FIREBASE_STORAGE_BUCKET=...
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=...
+REACT_APP_FIREBASE_APP_ID=...
+```
+
+Then start the dev server:
+
+```bash
+npm start
+```
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, React Router v6 |
+| UI | MUI v5, CSS Variables (custom theme system) |
+| Auth | Firebase Authentication |
+| Database | Cloud Firestore (real-time) |
+| Video | WebRTC — STUN + TURN relay via OpenRelay |
+| Hosting | Firebase Hosting |
+
+---
+
+## Releases
+
+| Tag | Description |
+|-----|-------------|
+| `v1.0` | Original Dec 2021 prototype |
+| `v2.0` | Full rebrand to Synq — theme system, new auth flow, video call improvements |
