@@ -1,27 +1,72 @@
-/* ─── CSS Variables ─── */
+/* ─── CSS Variables — Violet Night (default) ─── */
 :root {
-  --color-primary:      #6264A7;
-  --color-primary-dark: #464775;
-  --color-primary-light:#8B8CC8;
-  --color-accent:       #C239B3;
-  --color-bg:           #f5f5f5;
-  --color-surface:      #ffffff;
-  --color-header:       #464775;
-  --color-sidebar:      #f0f0f5;
-  --color-panel:        #e8eaf6;
-  --color-text:         #201f1e;
-  --color-text-muted:   #605e5c;
-  --color-border:       #e0e0e0;
-  --color-msg-mine:     #6264A7;
-  --color-msg-theirs:   #ffffff;
-  --radius-sm:          6px;
-  --radius-md:          12px;
-  --radius-lg:          20px;
-  --shadow-sm:          0 1px 3px rgba(0,0,0,0.12);
-  --shadow-md:          0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg:          0 8px 24px rgba(0,0,0,0.15);
-  --transition:         0.2s ease;
-  --header-height:      52px;
+  --color-primary:       #7c3aed;
+  --color-primary-dark:  #5b21b6;
+  --color-primary-light: #a78bfa;
+  --color-accent:        #06b6d4;
+  --color-bg:            #0d0d1f;
+  --color-surface:       #13132a;
+  --color-surface-2:     #1a1a36;
+  --color-header:        #0a0a1a;
+  --color-sidebar:       #0f0f24;
+  --color-panel:         #111128;
+  --color-text:          #f0edff;
+  --color-text-muted:    #9b8ec4;
+  --color-border:        rgba(124,58,237,0.2);
+  --color-msg-mine:      #7c3aed;
+  --color-msg-theirs:    #1e1e3f;
+  --color-header-blur:   rgba(13,13,31,0.88);
+  --radius-sm:           6px;
+  --radius-md:           12px;
+  --radius-lg:           20px;
+  --shadow-sm:           0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:           0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:           0 8px 32px rgba(0,0,0,0.5);
+  --transition:          0.2s ease;
+  --header-height:       52px;
+}
+
+/* ─── Indigo Slate theme ─── */
+[data-theme="indigo"] {
+  --color-primary:       #6366f1;
+  --color-primary-dark:  #4338ca;
+  --color-primary-light: #818cf8;
+  --color-accent:        #22d3ee;
+  --color-bg:            #0f172a;
+  --color-surface:       #1e293b;
+  --color-surface-2:     #273549;
+  --color-header:        #0a1120;
+  --color-sidebar:       #111c30;
+  --color-panel:         #182032;
+  --color-text:          #f1f5f9;
+  --color-text-muted:    #94a3b8;
+  --color-border:        rgba(99,102,241,0.2);
+  --color-msg-mine:      #6366f1;
+  --color-msg-theirs:    #1e293b;
+  --color-header-blur:   rgba(15,23,42,0.88);
+}
+
+/* ─── Clean Light theme ─── */
+[data-theme="light"] {
+  --color-primary:       #6366f1;
+  --color-primary-dark:  #4338ca;
+  --color-primary-light: #4f46e5;
+  --color-accent:        #0ea5e9;
+  --color-bg:            #f8fafc;
+  --color-surface:       #ffffff;
+  --color-surface-2:     #f1f5f9;
+  --color-header:        #6366f1;
+  --color-sidebar:       #f8fafc;
+  --color-panel:         #f1f5f9;
+  --color-text:          #0f172a;
+  --color-text-muted:    #64748b;
+  --color-border:        rgba(99,102,241,0.18);
+  --color-msg-mine:      #6366f1;
+  --color-msg-theirs:    #f1f5f9;
+  --color-header-blur:   rgba(248,250,252,0.95);
+  --shadow-sm:           0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:           0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:           0 8px 32px rgba(0,0,0,0.1);
 }
 
 /* ─── Reset ─── */
@@ -43,7 +88,7 @@ html, body {
 }
 
 body {
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
@@ -52,5 +97,5 @@ body {
 /* ─── Custom scrollbar ─── */
 ::-webkit-scrollbar        { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #c0c0c0; border-radius: 10px; }
+::-webkit-scrollbar-thumb  { background: var(--color-border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }

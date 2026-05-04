@@ -4,48 +4,15 @@ import Start from './Components/Start';
 import SignIn from './Components/SignIn';
 import SignUp from './Components/SignUp';
 import { Routes, Route } from 'react-router-dom';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { SynqThemeProvider, useSynqTheme } from './context/ThemeContext';
+import { muiThemes } from './theme/themes';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#6264A7',
-      light: '#7B7EB8',
-      dark: '#464775',
-    },
-    secondary: {
-      main: '#C239B3',
-    },
-    background: {
-      default: '#f5f5f5',
-    },
-  },
-  typography: {
-    fontFamily: '"Segoe UI", "Helvetica Neue", Arial, sans-serif',
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: 4,
-          fontWeight: 600,
-        },
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        variant: 'outlined',
-        size: 'small',
-      },
-    },
-  },
-});
-
-function App() {
+function ThemedApp() {
+  const { theme } = useSynqTheme();
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={muiThemes[theme]}>
       <CssBaseline />
       <div id="App" className="App">
         <Routes>
@@ -56,6 +23,14 @@ function App() {
         </Routes>
       </div>
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <SynqThemeProvider>
+      <ThemedApp />
+    </SynqThemeProvider>
   );
 }
 
