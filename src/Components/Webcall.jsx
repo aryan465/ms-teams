@@ -88,6 +88,7 @@ function Webcall() {
   const unsubAnswerRef = useRef(null);
   const unsubOfferRef = useRef(null);
   const myStreamRef = useRef(null);
+  const callDocIdRef = useRef(null); // track active call doc for hangup signaling
   // Ref to handleStartCall so the autoStart effect can call it after first render
   const handleStartCallRef = useRef(null);
 
@@ -213,10 +214,11 @@ function Webcall() {
   const createCallOffer = async (me, minMe, client, minClient) => {
     const pc = getPC();
     const callDocRef = doc(collection(firestore, 'calls'));
+    callDocIdRef.current = callDocRef.id;
     const offerCandidates = collection(callDocRef, 'offerCandidates');
     const answerCandidates = collection(callDocRef, 'answerCandidates');
 
-    // Write callId to both users atomically
+    // Write callId to both users
     const [mySnap, theirSnap] = await Promise.all([
       getDoc(doc(firestore, 'users', me)),
       getDoc(doc(firestore, 'users', client)),
@@ -248,7 +250,7 @@ function Webcall() {
       },
     });
 
-    // Listen for answer or decline
+    // Listen for answer, decline, or remote hangup
     unsubCallRef.current = onSnapshot(callDocRef, (snap) => {
       const data = snap.data();
       if (!pc.currentRemoteDescription && data?.answer) {
@@ -262,6 +264,15 @@ function Webcall() {
         setErrorMsg('Call was declined.');
         setCallStarted(false);
         setTimeout(() => navigate('/chat', { replace: true }), 2500);
+      }
+      if (data?.callEnded && pc.connectionState !== 'closed') {
+        stopMedia(myStreamRef.current);
+        myStreamRef.current = null;
+        cleanupPC();
+        setCallStatus(STATUS.ENDED);
+        setErrorMsg('Call ended by the other person.');
+        setCallStarted(false);
+        setTimeout(() => navigate('/chat', { replace: true }), 2000);
       }
     });
 
@@ -279,6 +290,7 @@ function Webcall() {
   const answerCall = async (answerId) => {
     const pc = getPC();
     const callDocRef = doc(firestore, 'calls', answerId);
+    callDocIdRef.current = answerId;
     const answerCandidates = collection(callDocRef, 'answerCandidates');
     const offerCandidates = collection(callDocRef, 'offerCandidates');
 
@@ -301,6 +313,20 @@ function Webcall() {
           pc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(() => {});
         }
       });
+    });
+
+    // Listen for caller hangup signal
+    unsubCallRef.current = onSnapshot(callDocRef, (snap) => {
+      const data = snap.data();
+      if (data?.callEnded && pc.connectionState !== 'closed') {
+        stopMedia(myStreamRef.current);
+        myStreamRef.current = null;
+        cleanupPC();
+        setCallStatus(STATUS.ENDED);
+        setErrorMsg('Call ended by the other person.');
+        setCallStarted(false);
+        setTimeout(() => navigate('/chat', { replace: true }), 2000);
+      }
     });
   };
 
@@ -356,11 +382,20 @@ function Webcall() {
       const me = currentUser.email;
       const minMe = minOf(me);
 
+      // Signal the other side via Firestore before we clean up
+      if (callDocIdRef.current) {
+        try {
+          await updateDoc(doc(firestore, 'calls', callDocIdRef.current), { callEnded: true });
+        } catch (_) {}
+        callDocIdRef.current = null;
+      }
+
       const userSnap = await getDoc(doc(firestore, 'users', me));
       const currentuser = userSnap.data()?.currentuser || '';
       const minCurrentuser = currentuser ? minOf(currentuser) : '';
 
       if (currentuser && minCurrentuser) {
+        // Clear call ID so next call creates a fresh doc
         await updateDoc(doc(firestore, 'users', me), {
           mycalls: { ...userSnap.data().mycalls, [minCurrentuser]: '' },
         });
@@ -377,7 +412,6 @@ function Webcall() {
         }
       }
     } catch (err) {
-      // Firestore cleanup failed — still navigate back
       console.warn('Hangup cleanup error:', err.message);
     } finally {
       navigate('/chat', { replace: true });

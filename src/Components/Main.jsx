@@ -33,6 +33,8 @@ function Main() {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [chatUsers, setChatUsers] = useState([]);
+  const [lastMessages, setLastMessages] = useState({}); // minEmail → {text, ts, from}
+  const [lastRead, setLastRead] = useState({});         // minEmail → ts
   const [currentChatUser, setCurrentChatUser] = useState('');
   const [messages, setMessages] = useState([]);
   const [sendingMsg, setSendingMsg] = useState(false);
@@ -56,8 +58,11 @@ function Main() {
     const userDocRef = doc(firestore, 'users', currentUser.email);
     const unsub = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
-        setChatUsers(snapshot.data().chatusers || []);
-        setIncomingCall(snapshot.data().incomingCall || null);
+        const data = snapshot.data();
+        setChatUsers(data.chatusers || []);
+        setLastMessages(data.lastMessages || {});
+        setLastRead(data.lastRead || {});
+        setIncomingCall(data.incomingCall || null);
       }
     });
     return () => unsub();
@@ -162,30 +167,39 @@ function Main() {
     const myRef = doc(firestore, 'users', currentUser.email);
     const mySnap = await getDoc(myRef);
     const myData = mySnap.data();
-    if (myData.chatusers.includes(targetUser)) return;
 
-    const minTarget = minEmail(targetUser);
-    await updateDoc(myRef, {
-      chatusers: [...myData.chatusers, targetUser],
-      [minTarget]: [],
-      mycalls: { ...myData.mycalls, [minTarget]: '' },
-    });
+    if (!myData.chatusers.includes(targetUser)) {
+      const minTarget = minEmail(targetUser);
+      await updateDoc(myRef, {
+        chatusers: [...myData.chatusers, targetUser],
+        [minTarget]: [],
+        mycalls: { ...myData.mycalls, [minTarget]: '' },
+      });
 
-    const theirRef = doc(firestore, 'users', targetUser);
-    const theirSnap = await getDoc(theirRef);
-    const theirData = theirSnap.data();
-    await updateDoc(theirRef, {
-      chatusers: [...theirData.chatusers, currentUser.email],
-      [myMinEmail]: [],
-      mycalls: { ...theirData.mycalls, [myMinEmail]: '' },
-    });
+      const theirRef = doc(firestore, 'users', targetUser);
+      const theirSnap = await getDoc(theirRef);
+      const theirData = theirSnap.data();
+      await updateDoc(theirRef, {
+        chatusers: [...theirData.chatusers, currentUser.email],
+        [myMinEmail]: [],
+        mycalls: { ...theirData.mycalls, [myMinEmail]: '' },
+      });
+    }
+
+    // Immediately open the conversation
+    openChat(targetUser);
   };
 
   const openChat = async (chatUser) => {
     setCurrentChatUser(chatUser);
     setMessages([]);
     setMobileView('chat');
-    await updateDoc(doc(firestore, 'users', currentUser.email), { currentuser: chatUser });
+    const minChatUser = minEmail(chatUser);
+    // Mark as read and set current chat partner
+    await updateDoc(doc(firestore, 'users', currentUser.email), {
+      currentuser: chatUser,
+      [`lastRead.${minChatUser}`]: Date.now(),
+    });
   };
 
   const sendMessage = async () => {
@@ -194,18 +208,26 @@ function Main() {
     setMessage(''); // clear immediately so input feels instant
     setSendingMsg(true);
     const minChatUser = minEmail(currentChatUser);
+    const now = Date.now();
 
     const myRef = doc(firestore, 'users', currentUser.email);
     const mySnap = await getDoc(myRef);
     const myChat = [...(mySnap.data()[minChatUser] || [])];
     myChat.push({ user: myMinEmail, chat: msgText });
-    await updateDoc(myRef, { [minChatUser]: myChat });
+    await updateDoc(myRef, {
+      [minChatUser]: myChat,
+      [`lastMessages.${minChatUser}`]: { text: msgText, ts: now, from: myMinEmail },
+      [`lastRead.${minChatUser}`]: now, // I sent it, so I've "read" it
+    });
 
     const theirRef = doc(firestore, 'users', currentChatUser);
     const theirSnap = await getDoc(theirRef);
     const theirChat = [...(theirSnap.data()[myMinEmail] || [])];
     theirChat.push({ user: myMinEmail, chat: msgText });
-    await updateDoc(theirRef, { [myMinEmail]: theirChat });
+    await updateDoc(theirRef, {
+      [myMinEmail]: theirChat,
+      [`lastMessages.${myMinEmail}`]: { text: msgText, ts: now, from: myMinEmail },
+    });
 
     setSendingMsg(false);
   };
@@ -352,22 +374,37 @@ function Main() {
                 <p>Search for people above to start a conversation</p>
               </div>
             ) : (
-              chatUsers.map((user) => {
-                const isActive = user === currentChatUser;
-                return (
-                  <div
-                    key={user}
-                    className={`chat-list-item ${isActive ? 'chat-list-item--active' : ''}`}
-                    onClick={() => openChat(user)}
-                  >
-                    <div className="chat-list-avatar">{user.charAt(0).toUpperCase()}</div>
-                    <div className="chat-list-info">
-                      <span className="chat-list-name">{minEmail(user)}</span>
-                      <span className="chat-list-email">{user}</span>
+              [...chatUsers]
+                .sort((a, b) => {
+                  const tsA = lastMessages[minEmail(a)]?.ts || 0;
+                  const tsB = lastMessages[minEmail(b)]?.ts || 0;
+                  return tsB - tsA;
+                })
+                .map((user) => {
+                  const minUser = minEmail(user);
+                  const isActive = user === currentChatUser;
+                  const lastMsg = lastMessages[minUser];
+                  const readTs = lastRead[minUser] || 0;
+                  const hasUnread = lastMsg && lastMsg.from !== myMinEmail && lastMsg.ts > readTs;
+                  return (
+                    <div
+                      key={user}
+                      className={`chat-list-item ${isActive ? 'chat-list-item--active' : ''}`}
+                      onClick={() => openChat(user)}
+                    >
+                      <div className="chat-list-avatar">{user.charAt(0).toUpperCase()}</div>
+                      <div className="chat-list-info">
+                        <span className="chat-list-name">{minEmail(user)}</span>
+                        <span className={`chat-list-preview ${hasUnread ? 'chat-list-preview--unread' : ''}`}>
+                          {lastMsg
+                            ? (lastMsg.from === myMinEmail ? `You: ${lastMsg.text}` : lastMsg.text)
+                            : user}
+                        </span>
+                      </div>
+                      {hasUnread && <span className="chat-unread-dot" />}
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
             )}
           </div>
         </div>
