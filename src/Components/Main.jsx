@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import '../CSS/Main.css';
-import titlelogo from '../Logo/video-call (1).png';
-import vclogo from '../Logo/vclogo.png';
 import { auth, firestore } from '../config/fbConfig';
 import {
   collection,
@@ -15,8 +13,11 @@ import {
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SynqLogo from './shared/SynqLogo';
+import ThemeSwitcher from './shared/ThemeSwitcher';
 import ChatIcon from '@mui/icons-material/Chat';
 import SearchIcon from '@mui/icons-material/Search';
 import SendIcon from '@mui/icons-material/Send';
@@ -189,22 +190,23 @@ function Main() {
 
   const sendMessage = async () => {
     if (!currentChatUser || message.trim() === '') return;
+    const msgText = message.trim();
+    setMessage(''); // clear immediately so input feels instant
     setSendingMsg(true);
     const minChatUser = minEmail(currentChatUser);
 
     const myRef = doc(firestore, 'users', currentUser.email);
     const mySnap = await getDoc(myRef);
     const myChat = [...(mySnap.data()[minChatUser] || [])];
-    myChat.push({ user: myMinEmail, chat: message.trim() });
+    myChat.push({ user: myMinEmail, chat: msgText });
     await updateDoc(myRef, { [minChatUser]: myChat });
 
     const theirRef = doc(firestore, 'users', currentChatUser);
     const theirSnap = await getDoc(theirRef);
     const theirChat = [...(theirSnap.data()[myMinEmail] || [])];
-    theirChat.push({ user: myMinEmail, chat: message.trim() });
+    theirChat.push({ user: myMinEmail, chat: msgText });
     await updateDoc(theirRef, { [myMinEmail]: theirChat });
 
-    setMessage('');
     setSendingMsg(false);
   };
 
@@ -286,8 +288,8 @@ function Main() {
         )}
 
         <Link to="/" className="chat-brand">
-          <img src={titlelogo} alt="" className="chat-logo" />
-          <span className="chat-brand-name">Microsoft Teams</span>
+          <SynqLogo size={26} />
+          <span className="chat-brand-name">Synq</span>
         </Link>
 
         <div className="chat-search-wrapper" ref={searchRef}>
@@ -316,6 +318,7 @@ function Main() {
         </div>
 
         <div className="chat-header-right">
+          <ThemeSwitcher />
           <Tooltip title={currentUser.displayName || currentUser.email}>
             <div className="chat-avatar">{avatarLetter}</div>
           </Tooltip>
@@ -381,15 +384,30 @@ function Main() {
                     <div className="chat-msg-header-email">{currentChatUser}</div>
                   </div>
                 </div>
-                <Tooltip title="Start video call">
-                  <IconButton
-                    color="primary"
-                    className="vc-button"
-                    onClick={() => navigate('/chat/vc', { state: { autoStart: true } })}
-                  >
-                    <VideoCallIcon />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<VideoCallIcon />}
+                  onClick={() => navigate('/chat/vc', { state: { autoStart: true } })}
+                  sx={{
+                    borderRadius: '100px',
+                    px: 2,
+                    py: 0.75,
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    textTransform: 'none',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                    boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #6d28d9 0%, #4338ca 100%)',
+                      boxShadow: '0 4px 20px rgba(124,58,237,0.55)',
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  Video Call
+                </Button>
               </div>
 
               <div className="chat-msg-area" ref={msgAreaRef}>
@@ -437,7 +455,7 @@ function Main() {
             </>
           ) : (
             <div className="chat-msg-placeholder">
-              <img src={vclogo} alt="" className="placeholder-icon" />
+              <SynqLogo size={48} />
               <h3>Open a conversation</h3>
               <p>Select a person from the list or search to start chatting.</p>
             </div>
