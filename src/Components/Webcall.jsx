@@ -10,6 +10,7 @@ import {
   setDoc,
   onSnapshot,
   deleteField,
+  arrayUnion,
 } from 'firebase/firestore';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
@@ -89,6 +90,8 @@ function Webcall() {
   const unsubOfferRef = useRef(null);
   const myStreamRef = useRef(null);
   const callDocIdRef = useRef(null); // track active call doc for hangup signaling
+  const isCallerRef = useRef(false);    // true = we created the offer
+  const callConnectedRef = useRef(false); // true = call reached connected state
   // Ref to handleStartCall so the autoStart effect can call it after first render
   const handleStartCallRef = useRef(null);
 
@@ -152,7 +155,7 @@ function Webcall() {
 
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
-      if (state === 'connected')     { setCallStatus(STATUS.CONNECTED); setRemoteActive(true); }
+      if (state === 'connected')     { setCallStatus(STATUS.CONNECTED); setRemoteActive(true); callConnectedRef.current = true; }
       if (state === 'disconnected')  { setCallStatus(STATUS.RECONNECTING); }
       if (state === 'failed')        { setCallStatus(STATUS.ERROR); setErrorMsg('Peer connection failed. Try again.'); }
       if (state === 'closed')        { setCallStatus(STATUS.ENDED); }
@@ -215,6 +218,7 @@ function Webcall() {
     const pc = getPC();
     const callDocRef = doc(collection(firestore, 'calls'));
     callDocIdRef.current = callDocRef.id;
+    isCallerRef.current = true;
     const offerCandidates = collection(callDocRef, 'offerCandidates');
     const answerCandidates = collection(callDocRef, 'answerCandidates');
 
@@ -257,6 +261,10 @@ function Webcall() {
         pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
       if (data?.callDeclined) {
+        // Log as missed for the caller
+        updateDoc(doc(firestore, 'users', me), {
+          callLogs: arrayUnion({ with: client, withName: minClient, type: 'missed', ts: Date.now() }),
+        }).catch(() => {});
         stopMedia(myStreamRef.current);
         myStreamRef.current = null;
         cleanupPC();
@@ -291,6 +299,7 @@ function Webcall() {
     const pc = getPC();
     const callDocRef = doc(firestore, 'calls', answerId);
     callDocIdRef.current = answerId;
+    isCallerRef.current = false;
     const answerCandidates = collection(callDocRef, 'answerCandidates');
     const offerCandidates = collection(callDocRef, 'offerCandidates');
 
@@ -393,6 +402,31 @@ function Webcall() {
       const userSnap = await getDoc(doc(firestore, 'users', me));
       const currentuser = userSnap.data()?.currentuser || '';
       const minCurrentuser = currentuser ? minOf(currentuser) : '';
+
+      // Write call log based on whether the call actually connected
+      if (currentuser) {
+        const ts = Date.now();
+        if (callConnectedRef.current) {
+          // Both sides were connected — log outgoing/incoming for both parties
+          const myType = isCallerRef.current ? 'outgoing' : 'incoming';
+          const theirType = isCallerRef.current ? 'incoming' : 'outgoing';
+          await Promise.all([
+            updateDoc(doc(firestore, 'users', me), {
+              callLogs: arrayUnion({ with: currentuser, withName: minCurrentuser, type: myType, ts }),
+            }),
+            updateDoc(doc(firestore, 'users', currentuser), {
+              callLogs: arrayUnion({ with: me, withName: currentUser.displayName || minMe, type: theirType, ts }),
+            }),
+          ]).catch(() => {});
+        } else if (isCallerRef.current) {
+          // Caller hung up before callee answered — log as missed for callee
+          updateDoc(doc(firestore, 'users', currentuser), {
+            callLogs: arrayUnion({ with: me, withName: currentUser.displayName || minMe, type: 'missed', ts }),
+          }).catch(() => {});
+        }
+        callConnectedRef.current = false;
+        isCallerRef.current = false;
+      }
 
       if (currentuser && minCurrentuser) {
         // Clear call ID so next call creates a fresh doc

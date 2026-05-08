@@ -26,6 +26,24 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CallIcon from '@mui/icons-material/Call';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CallMadeIcon from '@mui/icons-material/CallMade';
+import CallReceivedIcon from '@mui/icons-material/CallReceived';
+import PhoneMissedIcon from '@mui/icons-material/PhoneMissed';
+
+// Format a unix-ms timestamp for display in messages and call logs
+const formatTime = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return time;
+  if (isYesterday) return `Yesterday · ${time}`;
+  return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
+};
 
 function Main() {
   const [message, setMessage] = useState('');
@@ -41,6 +59,8 @@ function Main() {
   // mobile: 'list' | 'chat'
   const [mobileView, setMobileView] = useState('list');
   const [incomingCall, setIncomingCall] = useState(null);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'calls'
+  const [callLogs, setCallLogs] = useState([]);
 
   const navigate = useNavigate();
   const msgAreaRef = useRef(null);
@@ -63,6 +83,7 @@ function Main() {
         setLastMessages(data.lastMessages || {});
         setLastRead(data.lastRead || {});
         setIncomingCall(data.incomingCall || null);
+        setCallLogs(data.callLogs || []);
       }
     });
     return () => unsub();
@@ -213,7 +234,7 @@ function Main() {
     const myRef = doc(firestore, 'users', currentUser.email);
     const mySnap = await getDoc(myRef);
     const myChat = [...(mySnap.data()[minChatUser] || [])];
-    myChat.push({ user: myMinEmail, chat: msgText });
+    myChat.push({ user: myMinEmail, chat: msgText, ts: now });
     await updateDoc(myRef, {
       [minChatUser]: myChat,
       [`lastMessages.${minChatUser}`]: { text: msgText, ts: now, from: myMinEmail },
@@ -223,13 +244,22 @@ function Main() {
     const theirRef = doc(firestore, 'users', currentChatUser);
     const theirSnap = await getDoc(theirRef);
     const theirChat = [...(theirSnap.data()[myMinEmail] || [])];
-    theirChat.push({ user: myMinEmail, chat: msgText });
+    theirChat.push({ user: myMinEmail, chat: msgText, ts: now });
     await updateDoc(theirRef, {
       [myMinEmail]: theirChat,
       [`lastMessages.${myMinEmail}`]: { text: msgText, ts: now, from: myMinEmail },
     });
 
     setSendingMsg(false);
+  };
+
+  const handleCallFromLog = async (email) => {
+    if (!chatUsers.includes(email)) {
+      await addChatUser(email); // also calls openChat and sets currentuser
+    } else {
+      await openChat(email);
+    }
+    navigate('/chat/vc', { state: { autoStart: true } });
   };
 
   const handleLogout = async () => {
@@ -355,59 +385,115 @@ function Main() {
       <div className="chat-body">
         <aside className="chat-sidebar">
           <Tooltip title="Chat" placement="right">
-            <div className="sidebar-item sidebar-item--active">
+            <div
+              className={`sidebar-item ${activeTab === 'chat' ? 'sidebar-item--active' : ''}`}
+              onClick={() => setActiveTab('chat')}
+            >
               <ChatIcon />
               <span>Chat</span>
             </div>
           </Tooltip>
+          <Tooltip title="Calls" placement="right">
+            <div
+              className={`sidebar-item ${activeTab === 'calls' ? 'sidebar-item--active' : ''}`}
+              onClick={() => setActiveTab('calls')}
+            >
+              <CallIcon />
+              <span>Calls</span>
+            </div>
+          </Tooltip>
         </aside>
 
-        {/* List panel — hidden on mobile when viewing a chat */}
-        <div className={`chat-list-panel ${mobileView === 'chat' ? 'chat-list-panel--hidden-mobile' : ''}`}>
-          <div className="chat-list-header">
-            <h2>Chat</h2>
+        {/* List panel — chat contacts or call logs depending on active sidebar tab */}
+        {activeTab === 'chat' && (
+          <div className={`chat-list-panel ${mobileView === 'chat' ? 'chat-list-panel--hidden-mobile' : ''}`}>
+            <div className="chat-list-header">
+              <h2>Chat</h2>
+            </div>
+            <div className="chat-list">
+              {chatUsers.length === 0 ? (
+                <div className="chat-list-empty">
+                  <SearchIcon sx={{ fontSize: 40, color: '#aaa', mb: 1 }} />
+                  <p>Search for people above to start a conversation</p>
+                </div>
+              ) : (
+                [...chatUsers]
+                  .sort((a, b) => {
+                    const tsA = lastMessages[minEmail(a)]?.ts || 0;
+                    const tsB = lastMessages[minEmail(b)]?.ts || 0;
+                    return tsB - tsA;
+                  })
+                  .map((user) => {
+                    const minUser = minEmail(user);
+                    const isActive = user === currentChatUser;
+                    const lastMsg = lastMessages[minUser];
+                    const readTs = lastRead[minUser] || 0;
+                    const hasUnread = lastMsg && lastMsg.from !== myMinEmail && lastMsg.ts > readTs;
+                    return (
+                      <div
+                        key={user}
+                        className={`chat-list-item ${isActive ? 'chat-list-item--active' : ''}`}
+                        onClick={() => openChat(user)}
+                      >
+                        <div className="chat-list-avatar">{user.charAt(0).toUpperCase()}</div>
+                        <div className="chat-list-info">
+                          <span className="chat-list-name">{minEmail(user)}</span>
+                          <span className={`chat-list-preview ${hasUnread ? 'chat-list-preview--unread' : ''}`}>
+                            {lastMsg
+                              ? (lastMsg.from === myMinEmail ? `You: ${lastMsg.text}` : lastMsg.text)
+                              : user}
+                          </span>
+                        </div>
+                        {hasUnread && <span className="chat-unread-dot" />}
+                      </div>
+                    );
+                  })
+              )}
+            </div>
           </div>
-          <div className="chat-list">
-            {chatUsers.length === 0 ? (
-              <div className="chat-list-empty">
-                <SearchIcon sx={{ fontSize: 40, color: '#aaa', mb: 1 }} />
-                <p>Search for people above to start a conversation</p>
-              </div>
-            ) : (
-              [...chatUsers]
-                .sort((a, b) => {
-                  const tsA = lastMessages[minEmail(a)]?.ts || 0;
-                  const tsB = lastMessages[minEmail(b)]?.ts || 0;
-                  return tsB - tsA;
-                })
-                .map((user) => {
-                  const minUser = minEmail(user);
-                  const isActive = user === currentChatUser;
-                  const lastMsg = lastMessages[minUser];
-                  const readTs = lastRead[minUser] || 0;
-                  const hasUnread = lastMsg && lastMsg.from !== myMinEmail && lastMsg.ts > readTs;
-                  return (
-                    <div
-                      key={user}
-                      className={`chat-list-item ${isActive ? 'chat-list-item--active' : ''}`}
-                      onClick={() => openChat(user)}
-                    >
-                      <div className="chat-list-avatar">{user.charAt(0).toUpperCase()}</div>
-                      <div className="chat-list-info">
-                        <span className="chat-list-name">{minEmail(user)}</span>
-                        <span className={`chat-list-preview ${hasUnread ? 'chat-list-preview--unread' : ''}`}>
-                          {lastMsg
-                            ? (lastMsg.from === myMinEmail ? `You: ${lastMsg.text}` : lastMsg.text)
-                            : user}
+        )}
+        {activeTab === 'calls' && (
+          <div className={`chat-list-panel ${mobileView === 'chat' ? 'chat-list-panel--hidden-mobile' : ''}`}>
+            <div className="chat-list-header">
+              <h2>Calls</h2>
+            </div>
+            <div className="chat-list">
+              {callLogs.length === 0 ? (
+                <div className="chat-list-empty">
+                  <CallIcon sx={{ fontSize: 40, color: '#aaa', mb: 1 }} />
+                  <p>No call history yet</p>
+                </div>
+              ) : (
+                [...callLogs]
+                  .sort((a, b) => b.ts - a.ts)
+                  .map((log, idx) => (
+                    <div key={idx} className="call-log-item">
+                      <div className="chat-list-avatar">{log.withName.charAt(0).toUpperCase()}</div>
+                      <div className="call-log-info">
+                        <span className="chat-list-name">{log.withName}</span>
+                        <span className="call-log-meta">
+                          {log.type === 'outgoing' && <CallMadeIcon className="call-log-icon call-log-icon--out" fontSize="inherit" />}
+                          {log.type === 'incoming' && <CallReceivedIcon className="call-log-icon call-log-icon--in" fontSize="inherit" />}
+                          {log.type === 'missed' && <PhoneMissedIcon className="call-log-icon call-log-icon--missed" fontSize="inherit" />}
+                          <span className="call-log-type">{log.type}</span>
+                          <span className="call-log-time"> · {formatTime(log.ts)}</span>
                         </span>
                       </div>
-                      {hasUnread && <span className="chat-unread-dot" />}
+                      <Tooltip title="Start video call">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleCallFromLog(log.with)}
+                          sx={{ color: 'var(--color-primary)', flexShrink: 0 }}
+                        >
+                          <VideoCallIcon />
+                        </IconButton>
+                      </Tooltip>
                     </div>
-                  );
-                })
-            )}
+                  ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Message panel — hidden on mobile when viewing list */}
         <div className={`chat-msg-panel ${mobileView === 'list' ? 'chat-msg-panel--hidden-mobile' : ''}`}>
@@ -457,7 +543,10 @@ function Main() {
                   const isMe = item.user === myMinEmail;
                   return (
                     <div key={idx} className={`msg-bubble-wrap ${isMe ? 'msg-mine' : 'msg-theirs'}`}>
-                      <div className="msg-sender-label">{isMe ? 'You' : item.user}</div>
+                      <div className="msg-meta-row">
+                        <span className="msg-sender-label">{isMe ? 'You' : item.user}</span>
+                        {item.ts && <span className="msg-timestamp">{formatTime(item.ts)}</span>}
+                      </div>
                       <div className={`msg-bubble ${isMe ? 'msg-bubble--mine' : 'msg-bubble--theirs'}`}>
                         {item.chat}
                       </div>
