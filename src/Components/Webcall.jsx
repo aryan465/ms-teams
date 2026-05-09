@@ -69,6 +69,13 @@ const STATUS_LABELS = {
   [STATUS.ERROR]: 'Connection failed',
 };
 
+// How long to wait for ICE to reach 'connected' before giving up (ms)
+const ICE_CONNECT_TIMEOUT_MS = 20_000;
+// Max automatic ICE restarts before surfacing a hard error
+const ICE_RESTART_MAX = 3;
+// Target max video bitrate in kbps (≈ 500 kbps is plenty for 720p 1:1)
+const VIDEO_MAX_KBPS = 500;
+
 function Webcall() {
   const [myStream, setMyStream] = useState(null);
   const [cameraOn, setCameraOn] = useState(true);
@@ -92,6 +99,8 @@ function Webcall() {
   const callDocIdRef = useRef(null); // track active call doc for hangup signaling
   const isCallerRef = useRef(false);    // true = we created the offer
   const callConnectedRef = useRef(false); // true = call reached connected state
+  const iceRestartCountRef = useRef(0);   // number of automatic ICE restarts attempted
+  const connectTimeoutRef = useRef(null); // setTimeout handle for connection timeout
   // Ref to handleStartCall so the autoStart effect can call it after first render
   const handleStartCallRef = useRef(null);
 
@@ -101,6 +110,11 @@ function Webcall() {
   const minOf = (email) => email.substring(0, email.indexOf('@'));
 
   const cleanupPC = useCallback(() => {
+    // Clear any pending connection timeout
+    if (connectTimeoutRef.current) {
+      clearTimeout(connectTimeoutRef.current);
+      connectTimeoutRef.current = null;
+    }
     if (unsubCallRef.current)   { unsubCallRef.current();   unsubCallRef.current = null; }
     if (unsubAnswerRef.current) { unsubAnswerRef.current(); unsubAnswerRef.current = null; }
     if (unsubOfferRef.current)  { unsubOfferRef.current();  unsubOfferRef.current = null; }
@@ -155,7 +169,19 @@ function Webcall() {
 
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
-      if (state === 'connected')     { setCallStatus(STATUS.CONNECTED); setRemoteActive(true); callConnectedRef.current = true; }
+      if (state === 'connected') {
+        // Clear timeout — we made it
+        if (connectTimeoutRef.current) {
+          clearTimeout(connectTimeoutRef.current);
+          connectTimeoutRef.current = null;
+        }
+        iceRestartCountRef.current = 0;
+        setCallStatus(STATUS.CONNECTED);
+        setRemoteActive(true);
+        callConnectedRef.current = true;
+        // Apply bitrate cap once the connection is up
+        applyBitrateCap(pc);
+      }
       if (state === 'disconnected')  { setCallStatus(STATUS.RECONNECTING); }
       if (state === 'failed')        { setCallStatus(STATUS.ERROR); setErrorMsg('Peer connection failed. Try again.'); }
       if (state === 'closed')        { setCallStatus(STATUS.ENDED); }
@@ -163,9 +189,20 @@ function Webcall() {
 
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'failed') {
-        // Try ICE restart
-        pc.restartIce();
+        if (iceRestartCountRef.current >= ICE_RESTART_MAX) {
+          // Exhausted retries — surface a clear error
+          setCallStatus(STATUS.ERROR);
+          setErrorMsg(`Connection failed after ${ICE_RESTART_MAX} attempts. Check your network and try again.`);
+          return;
+        }
+        iceRestartCountRef.current += 1;
         setCallStatus(STATUS.RECONNECTING);
+        setErrorMsg(`Reconnecting… (attempt ${iceRestartCountRef.current}/${ICE_RESTART_MAX})`);
+        pc.restartIce();
+      }
+      // Clear transient error message once ICE recovers
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setErrorMsg('');
       }
     };
 
@@ -210,7 +247,45 @@ function Webcall() {
     setMyStream(localStream);
     myStreamRef.current = localStream;
     setCallStatus(STATUS.CONNECTING);
+
+    // ── Connection timeout ────────────────────────────────
+    // If ICE hasn't reached 'connected' within the timeout, abort gracefully.
+    if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+    connectTimeoutRef.current = setTimeout(() => {
+      const state = pcRef.current?.connectionState;
+      if (state && state !== 'connected' && state !== 'closed') {
+        setCallStatus(STATUS.ERROR);
+        setErrorMsg('Connection timed out. Check your network or try again.');
+        setCallStarted(false);
+        stopMedia(myStreamRef.current);
+        myStreamRef.current = null;
+        cleanupPC();
+      }
+    }, ICE_CONNECT_TIMEOUT_MS);
+
     return localStream;
+  };
+
+  // ── Bitrate cap + adaptive quality ───────────────────────
+  // Caps the video sender to VIDEO_MAX_KBPS. Called once after connection.
+  // The browser's bandwidth estimation (REMB/TWCC) still adapts within that ceiling.
+  const applyBitrateCap = async (pc) => {
+    try {
+      const senders = pc.getSenders();
+      for (const sender of senders) {
+        if (sender.track?.kind !== 'video') continue;
+        const params = sender.getParameters();
+        if (!params.encodings || params.encodings.length === 0) {
+          params.encodings = [{}];
+        }
+        params.encodings[0].maxBitrate = VIDEO_MAX_KBPS * 1000;
+        // Degrade resolution before dropping framerate when bandwidth is low
+        params.encodings[0].degradationPreference = 'maintain-framerate';
+        await sender.setParameters(params);
+      }
+    } catch (_) {
+      // setParameters is best-effort — some browsers/versions don't support it
+    }
   };
 
   // ── Caller side ──────────────────────────────────────────
@@ -278,7 +353,7 @@ function Webcall() {
         myStreamRef.current = null;
         cleanupPC();
         setCallStatus(STATUS.ENDED);
-        setErrorMsg('Call ended by the other person.');
+        setErrorMsg('Call ended.');
         setCallStarted(false);
         setTimeout(() => navigate('/chat', { replace: true }), 2000);
       }
