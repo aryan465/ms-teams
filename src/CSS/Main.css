@@ -409,6 +409,11 @@
   color: var(--color-primary, #6264A7) !important;
 }
 
+/* Back button: inside chat panel header, hidden on desktop */
+.chat-back-btn {
+  display: none !important;
+}
+
 /* Message area */
 .chat-msg-area {
   flex: 1;
@@ -546,13 +551,25 @@
   }
 }
 
-/* Tablet: collapse sidebar, shrink list */
+/* Tablet: collapse sidebar to icon-only, shrink list */
 @media (max-width: 680px) {
   .chat-brand-name {
     display: none;
   }
+  /* Keep sidebar visible but hide text labels — icons only */
   .chat-sidebar {
+    display: flex;
+    width: 52px;
+    min-width: 52px;
+    overflow: hidden; /* prevent border-left on active items causing scroll */
+  }
+  .sidebar-item span {
     display: none;
+  }
+  /* Use inset shadow so the active indicator doesn’t affect box width */
+  .sidebar-item--active {
+    border-left: none;
+    box-shadow: inset 3px 0 0 var(--color-primary, #7c3aed);
   }
   .chat-search-wrapper {
     max-width: 100%;
@@ -578,13 +595,70 @@
   }
 }
 
-/* Mobile: full-screen single-panel toggle */
+/* Mobile: full-screen single-panel toggle + horizontal tab bar */
 @media (max-width: 480px) {
+  /* Convert sidebar to horizontal tab bar pinned below the header */
+  .chat-sidebar {
+    flex-direction: row;
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    position: absolute;
+    top: 52px;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    background: var(--color-sidebar);
+    min-width: unset;
+    overflow: hidden;
+  }
+  /* When a chat is open: hide tab bar — full-screen chat mode */
+  .chat-app--chatting .chat-sidebar {
+    display: none;
+  }
+  .sidebar-item {
+    flex: 1;
+    flex-direction: row;
+    width: auto;
+    margin-bottom: 0;
+    padding: 0 8px;
+    border-radius: 0;
+    font-size: 12px;
+    gap: 6px;
+    height: 100%;
+    justify-content: center;
+    overflow: hidden;
+    white-space: nowrap;
+    box-shadow: none; /* reset tablet inset shadow */
+  }
+  /* Show labels in the horizontal bar */
+  .sidebar-item span {
+    display: inline;
+  }
+  .sidebar-item--active {
+    border-left: none;
+    box-shadow: none;
+    border-bottom: 3px solid var(--color-primary);
+    background: rgba(124, 58, 237, 0.12);
+  }
+
+  /* Show back button inside chat panel header */
+  .chat-back-btn {
+    display: flex !important;
+    color: var(--color-text-muted) !important;
+    flex-shrink: 0;
+    margin-right: 2px !important;
+  }
+
+  /* Panels: below header (52px) + tab bar (42px) = 94px */
   .chat-list-panel {
     width: 100%;
     min-width: 100%;
     position: absolute;
-    top: 52px;
+    top: 94px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -614,14 +688,19 @@
     display: none !important;
   }
 
+  /* Chat panel: 94px normally (below header + tab bar) */
   .chat-msg-panel {
     width: 100%;
     position: absolute;
-    top: 52px;
+    top: 94px;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 10;
+  }
+  /* Full-screen chat: no tab bar above, start right below header */
+  .chat-app--chatting .chat-msg-panel {
+    top: 52px;
   }
 
   .msg-bubble-wrap {
@@ -768,6 +847,8 @@
   font-size: 12px;
   color: var(--color-text-muted);
   margin-top: 1px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .call-log-icon {

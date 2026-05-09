@@ -295,7 +295,7 @@ function Main() {
     : currentUser.email.charAt(0).toUpperCase();
 
   return (
-    <div className="chat-app">
+    <div className={`chat-app${mobileView === 'chat' ? ' chat-app--chatting' : ''}`}>
       {/* Incoming call overlay */}
       {incomingCall && (
         <div className="incoming-call-overlay">
@@ -327,18 +327,6 @@ function Main() {
         </div>
       )}
       <header className="chat-header">
-        {/* Mobile back button when viewing chat */}
-        {mobileView === 'chat' && (
-          <IconButton
-            className="chat-back-btn"
-            size="small"
-            sx={{ color: 'white', mr: 0.5, display: { sm: 'none' } }}
-            onClick={() => setMobileView('list')}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-        )}
-
         <Link to="/" className="chat-brand">
           <SynqLogo size={26} />
           <span className="chat-brand-name">Synq</span>
@@ -387,7 +375,7 @@ function Main() {
           <Tooltip title="Chat" placement="right">
             <div
               className={`sidebar-item ${activeTab === 'chat' ? 'sidebar-item--active' : ''}`}
-              onClick={() => setActiveTab('chat')}
+              onClick={() => { setActiveTab('chat'); setCurrentChatUser(''); setMobileView('list'); }}
             >
               <ChatIcon />
               <span>Chat</span>
@@ -396,7 +384,7 @@ function Main() {
           <Tooltip title="Calls" placement="right">
             <div
               className={`sidebar-item ${activeTab === 'calls' ? 'sidebar-item--active' : ''}`}
-              onClick={() => setActiveTab('calls')}
+              onClick={() => { setActiveTab('calls'); setCurrentChatUser(''); setMobileView('list'); }}
             >
               <CallIcon />
               <span>Calls</span>
@@ -501,6 +489,13 @@ function Main() {
             <>
               <div className="chat-msg-header">
                 <div className="chat-msg-title">
+                  <IconButton
+                    className="chat-back-btn"
+                    size="small"
+                    onClick={() => setMobileView('list')}
+                  >
+                    <ArrowBackIcon />
+                  </IconButton>
                   <div className="chat-msg-header-avatar">{currentChatUser.charAt(0).toUpperCase()}</div>
                   <div>
                     <div className="chat-msg-header-name">{minEmail(currentChatUser)}</div>
