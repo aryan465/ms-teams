@@ -13,7 +13,6 @@ import {
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SynqLogo from './shared/SynqLogo';
@@ -502,30 +501,24 @@ function Main() {
                     <div className="chat-msg-header-email">{currentChatUser}</div>
                   </div>
                 </div>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<VideoCallIcon />}
-                  onClick={() => navigate('/chat/vc', { state: { autoStart: true } })}
-                  sx={{
-                    borderRadius: '100px',
-                    px: 2,
-                    py: 0.75,
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    textTransform: 'none',
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
-                    boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #6d28d9 0%, #4338ca 100%)',
-                      boxShadow: '0 4px 20px rgba(124,58,237,0.55)',
-                      transform: 'translateY(-1px)',
-                    },
-                  }}
-                >
-                  Video Call
-                </Button>
+                <Tooltip title="Video call">
+                  <IconButton
+                    onClick={() => navigate('/chat/vc', { state: { autoStart: true } })}
+                    sx={{
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                      color: 'white',
+                      boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #6d28d9 0%, #4338ca 100%)',
+                        boxShadow: '0 4px 20px rgba(124,58,237,0.55)',
+                        transform: 'translateY(-1px)',
+                      },
+                    }}
+                  >
+                    <VideoCallIcon />
+                  </IconButton>
+                </Tooltip>
               </div>
 
               <div className="chat-msg-area" ref={msgAreaRef}>
